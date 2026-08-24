@@ -5,7 +5,7 @@ from torch.distributions import Categorical
 import numpy as np
 
 class ActorCritic(nn.Module):
-    def __init__(self, max_queue_size, task_feat_dim, global_feat_dim, num_strategies=12):
+    def __init__(self, max_queue_size, task_feat_dim=9, system_feat_dim=6, resource_feat_dim=5, weight_feat_dim=4, num_strategies=12):
         super(ActorCritic, self).__init__()
         
         self.num_strategies = num_strategies
@@ -19,7 +19,7 @@ class ActorCritic(nn.Module):
         )
         
         # 综合特征处理层
-        combined_dim = 32 + global_feat_dim
+        combined_dim = 32 + system_feat_dim + resource_feat_dim + weight_feat_dim
         self.common = nn.Sequential(
             nn.Linear(combined_dim, 128),
             nn.ReLU(),
@@ -35,18 +35,20 @@ class ActorCritic(nn.Module):
 
     def forward(self, obs):
         # obs['tasks']: (batch, max_queue_size, task_feat_dim)
-        # obs['global']: (batch, global_feat_dim)
+        # obs['system']: (batch, 6), obs['resources']: (batch, R, 5), obs['weights']: (batch, 4)
         
         tasks = obs['tasks']
-        glob = obs['global']
+        system = obs['system']
+        resources = obs['resources']
+        weights = obs['weights']
         
         # 1. 任务特征嵌入与聚合
         t_embeds = self.task_embed(tasks) # (batch, max_queue_size, 32)
         # 简单的平均池化聚合任务信息
         t_agg = torch.mean(t_embeds, dim=1) # (batch, 32)
         
-        # 2. 合并全局特征
-        combined = torch.cat([t_agg, glob], dim=1) # (batch, 34)
+        resource_agg = torch.mean(resources, dim=1)
+        combined = torch.cat([t_agg, system, resource_agg, weights], dim=1)
         
         # 3. 提取特征
         x = self.common(combined)
@@ -58,10 +60,10 @@ class ActorCritic(nn.Module):
         return probs, value
 
 class PPOAgent:
-    def __init__(self, max_queue_size=10, task_feat_dim=7, global_feat_dim=2, num_strategies=12, lr=3e-4, gamma=0.99, K_epochs=10, eps_clip=0.2):
-        self.model = ActorCritic(max_queue_size, task_feat_dim, global_feat_dim, num_strategies)
+    def __init__(self, max_queue_size=10, task_feat_dim=9, system_feat_dim=6, resource_feat_dim=5, weight_feat_dim=4, num_strategies=12, lr=3e-4, gamma=0.99, K_epochs=10, eps_clip=0.2):
+        self.model = ActorCritic(max_queue_size, task_feat_dim, system_feat_dim, resource_feat_dim, weight_feat_dim, num_strategies)
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
-        self.model_old = ActorCritic(max_queue_size, task_feat_dim, global_feat_dim, num_strategies)
+        self.model_old = ActorCritic(max_queue_size, task_feat_dim, system_feat_dim, resource_feat_dim, weight_feat_dim, num_strategies)
         self.model_old.load_state_dict(self.model.state_dict())
         
         self.gamma = gamma
@@ -71,12 +73,18 @@ class PPOAgent:
         self.num_strategies = num_strategies
         self.MseLoss = nn.MSELoss()
 
+    @staticmethod
+    def _obs_to_tensor(obs):
+        return {
+            "tasks": torch.FloatTensor(obs["tasks"]).unsqueeze(0),
+            "system": torch.FloatTensor(obs.get("system", [0.0] * 6)).unsqueeze(0),
+            "resources": torch.FloatTensor(obs.get("resources", np.zeros((1, 5), dtype=np.float32))).unsqueeze(0),
+            "weights": torch.FloatTensor(obs.get("weights", [0.25] * 4)).unsqueeze(0),
+        }
+
     def select_action(self, obs):
         """选择策略组合 (0-11 对应 C01-C12)"""
-        obs_t = {
-            "tasks": torch.FloatTensor(obs['tasks']).unsqueeze(0),
-            "global": torch.FloatTensor(obs['global']).unsqueeze(0)
-        }
+        obs_t = self._obs_to_tensor(obs)
         
         with torch.no_grad():
             probs, value = self.model_old(obs_t)
@@ -87,24 +95,17 @@ class PPOAgent:
     
     def get_strategy_probs(self, obs):
         """获取各策略的选择概率，用于分析"""
-        obs_t = {
-            "tasks": torch.FloatTensor(obs['tasks']).unsqueeze(0),
-            "global": torch.FloatTensor(obs['global']).unsqueeze(0)
-        }
+        obs_t = self._obs_to_tensor(obs)
         with torch.no_grad():
-            logits = self.model_old.actor(self.model_old.common(
-                torch.cat([
-                    torch.mean(self.model_old.task_embed(obs_t['tasks']), dim=1),
-                    obs_t['global']
-                ], dim=1)
-            ))
-            probs = torch.softmax(logits, dim=-1)
+            probs, _ = self.model_old(obs_t)
         return probs.squeeze().numpy()
 
     def update(self, memory):
         # 转换内存数据为 Tensor
         old_states_tasks = torch.FloatTensor(np.array([m['obs']['tasks'] for m in memory]))
-        old_states_global = torch.FloatTensor(np.array([m['obs']['global'] for m in memory]))
+        old_states_system = torch.FloatTensor(np.array([m['obs']['system'] for m in memory]))
+        old_states_resources = torch.FloatTensor(np.array([m['obs']['resources'] for m in memory]))
+        old_states_weights = torch.FloatTensor(np.array([m['obs']['weights'] for m in memory]))
         old_actions = torch.LongTensor(np.array([m['action'] for m in memory]))
         old_logprobs = torch.FloatTensor(np.array([m['log_prob'] for m in memory]))
         
@@ -126,7 +127,9 @@ class PPOAgent:
             # 获取当前模型的概率和价值
             probs, state_values = self.model({
                 "tasks": old_states_tasks,
-                "global": old_states_global
+                "system": old_states_system,
+                "resources": old_states_resources,
+                "weights": old_states_weights,
             })
             
             dist = Categorical(probs)
@@ -160,13 +163,17 @@ class PPOAgent:
         """
         print(f"Starting Behavior Cloning pre-training for {epochs} epochs...")
         states_tasks = torch.FloatTensor(np.array([d[0]['tasks'] for d in expert_data]))
-        states_global = torch.FloatTensor(np.array([d[0]['global'] for d in expert_data]))
+        states_system = torch.FloatTensor(np.array([d[0]['system'] for d in expert_data]))
+        states_resources = torch.FloatTensor(np.array([d[0]['resources'] for d in expert_data]))
+        states_weights = torch.FloatTensor(np.array([d[0]['weights'] for d in expert_data]))
         actions = torch.LongTensor(np.array([d[1] for d in expert_data]))
 
         for epoch in range(epochs):
             probs, _ = self.model({
                 "tasks": states_tasks,
-                "global": states_global
+                "system": states_system,
+                "resources": states_resources,
+                "weights": states_weights,
             })
             
             # 交叉熵损失：使 Actor 输出尽可能接近专家动作

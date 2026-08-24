@@ -13,17 +13,20 @@ class SchedulingEnv(gym.Env):
     策略选择型调度强化学习环境
     动作空间：选择12种策略组合之一 (C01-C12)
     """
-    def __init__(self, max_queue_size: int = 10, num_strategies: int = 12):
+    def __init__(self, max_queue_size: int = 10, num_strategies: int = 12, max_resource_size: int = 4):
         super(SchedulingEnv, self).__init__()
         self.max_queue_size = max_queue_size
         self.num_strategies = num_strategies
+        self.max_resource_size = max_resource_size
         self.sim = SimulationEnv()
         
-        # 定义观察空间
-        task_feat_dim = 7
+        # 报告中的 S、T、R、wT，保留 global 作为旧代码兼容别名。
         self.observation_space = spaces.Dict({
-            "tasks": spaces.Box(low=-1, high=1000, shape=(max_queue_size, task_feat_dim), dtype=np.float32),
-            "global": spaces.Box(low=0, high=1000, shape=(2,), dtype=np.float32)
+            "system": spaces.Box(low=-1, high=1000, shape=(6,), dtype=np.float32),
+            "tasks": spaces.Box(low=-1, high=1000, shape=(max_queue_size, 9), dtype=np.float32),
+            "resources": spaces.Box(low=-1, high=1000, shape=(max_resource_size, 5), dtype=np.float32),
+            "weights": spaces.Box(low=0, high=1, shape=(4,), dtype=np.float32),
+            "global": spaces.Box(low=0, high=1000, shape=(2,), dtype=np.float32),
         })
         
         # 定义动作空间: 选择12种策略组合之一
@@ -40,15 +43,30 @@ class SchedulingEnv(gym.Env):
 
     def _seed_tasks(self):
         """初始化基础任务负载"""
+        rng = self.np_random
         for i in range(5):
-            t = Task(f"T{i}", priority=np.random.randint(1, 10), duration=np.random.uniform(5, 15), arrival_time=0)
-            if np.random.random() < 0.2:
+            t = Task(
+                f"T{i}",
+                priority=int(rng.integers(1, 10)),
+                duration=float(rng.uniform(5, 15)),
+                arrival_time=0,
+                capability_requirements={"machine": float(rng.integers(1, 3))},
+            )
+            if float(rng.random()) < 0.2:
                 t.is_realtime = True
                 t.deadline = 20.0
             self.sim.add_task(t)
         
-        self.sim.add_resource(Resource("R1", "Machine"))
-        self.sim.add_resource(Resource("R2", "Machine"))
+        for i in range(min(2, self.max_resource_size)):
+            self.sim.add_resource(
+                Resource(
+                    f"R{i + 1}",
+                    "Machine",
+                    capacity=1.0,
+                    capabilities={"machine": 2.0},
+                    reliability=1.0,
+                )
+            )
         
         # 推进到第一个事件
         self.sim.step()
@@ -58,9 +76,16 @@ class SchedulingEnv(gym.Env):
         # 按到达时间排序取前 K 个
         ready_tasks.sort(key=lambda x: x.arrival_time)
         
-        task_feats = np.zeros((self.max_queue_size, 7), dtype=np.float32) - 1.0
+        task_feats = np.zeros((self.max_queue_size, 9), dtype=np.float32) - 1.0
+        first_weights = np.full(4, 0.25, dtype=np.float32)
         for i, t in enumerate(ready_tasks[:self.max_queue_size]):
             wait_time = self.sim.current_time - (t.wait_start_time if t.wait_start_time else 0)
+            first_weights = np.array([
+                t.objective_weights["time"],
+                t.objective_weights["throughput"],
+                t.objective_weights["cost"],
+                t.objective_weights["stability"],
+            ], dtype=np.float32)
             task_feats[i] = [
                 t.priority,
                 t.duration,
@@ -68,13 +93,42 @@ class SchedulingEnv(gym.Env):
                 t.deadline if t.deadline else -1,
                 t.remaining_time,
                 1.0 if getattr(t, 'is_realtime', False) else 0.0,
-                wait_time
+                wait_time,
+                t.capability_requirements.get("machine", 0.0),
+                float(len(t.dependencies)),
             ]
             
         idle_res_count = len([r for r in self.sim.resources.values() if r.status == ResourceStatus.IDLE])
+        running_count = len([r for r in self.sim.resources.values() if r.status == ResourceStatus.BUSY])
+        pending_count = len([t for t in self.sim.tasks.values() if t.status == TaskStatus.PENDING])
+        failed_count = len([t for t in self.sim.tasks.values() if t.status == TaskStatus.FAILED])
+        system_feats = np.array([
+            len(ready_tasks),
+            idle_res_count,
+            running_count,
+            pending_count,
+            failed_count,
+            self.sim.current_time,
+        ], dtype=np.float32)
+
+        resource_feats = np.zeros((self.max_resource_size, 5), dtype=np.float32) - 1.0
+        for i, resource in enumerate(list(self.sim.resources.values())[:self.max_resource_size]):
+            resource_feats[i] = [
+                resource.capacity,
+                resource.capabilities.get("machine", 0.0),
+                resource.reliability,
+                1.0 if resource.status == ResourceStatus.BUSY else 0.0,
+                1.0 if resource.status == ResourceStatus.FAULT else 0.0,
+            ]
+
         global_feats = np.array([len(ready_tasks), idle_res_count], dtype=np.float32)
-        
-        return {"tasks": task_feats, "global": global_feats}
+        return {
+            "system": system_feats,
+            "tasks": task_feats,
+            "resources": resource_feats,
+            "weights": first_weights,
+            "global": global_feats,
+        }
 
     def step(self, action: int):
         """

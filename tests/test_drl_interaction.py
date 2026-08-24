@@ -14,7 +14,7 @@ def test_drl_interaction():
     total_reward = 0
     while steps < 20:
         # Agent 根据观察选择动作
-        action, log_prob = agent.select_action(obs)
+        action, log_prob, _ = agent.select_action(obs)
         
         # 环境执行动作
         obs, reward, terminated, truncated, info = env.step(action)
