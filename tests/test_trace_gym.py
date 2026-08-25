@@ -1,7 +1,7 @@
 from src.environment.trace_gym import TraceSchedulingEnv
 from src.experiments.alibaba_trace import AlibabaTrace
 from src.models.resource import Resource
-from src.models.task import Task
+from src.models.task import Task, TaskStatus
 
 
 def test_trace_gym_uses_trace_tasks_and_report_state():
@@ -80,3 +80,21 @@ def test_trace_observation_exposes_pending_workload_signature():
         return observation["system"][5]
 
     assert state_for(10.0) > state_for(1.0)
+
+
+def test_trace_environment_can_make_one_task_decision_at_a_time():
+    trace = AlibabaTrace(
+        tasks=[
+            Task("t1", priority=1, duration=10.0, arrival_time=0.0),
+            Task("t2", priority=1, duration=10.0, arrival_time=0.0),
+        ],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "test"},
+    )
+    env = TraceSchedulingEnv(trace, strategy_ids=["C01"], max_assignments_per_step=1)
+    env.reset(seed=0)
+    env.step(0)
+
+    statuses = [task.status for task in env.sim.tasks.values()]
+    assert statuses.count(TaskStatus.RUNNING) == 1
+    assert statuses.count(TaskStatus.READY) == 1

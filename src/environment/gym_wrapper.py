@@ -13,12 +13,21 @@ class SchedulingEnv(gym.Env):
     策略选择型调度强化学习环境
     动作空间：选择12种策略组合之一 (C01-C12)
     """
-    def __init__(self, max_queue_size: int = 10, num_strategies: int = 12, max_resource_size: int = 4):
+    def __init__(
+        self,
+        max_queue_size: int = 10,
+        num_strategies: int = 12,
+        max_resource_size: int = 4,
+        max_assignments_per_step: Optional[int] = None,
+    ):
         super(SchedulingEnv, self).__init__()
         self.max_queue_size = max_queue_size
         self.num_strategies = num_strategies
         self.strategy_ids = [f"C{i + 1:02d}" for i in range(num_strategies)]
         self.max_resource_size = max_resource_size
+        if max_assignments_per_step is not None and max_assignments_per_step < 1:
+            raise ValueError("max_assignments_per_step must be positive or None")
+        self.max_assignments_per_step = max_assignments_per_step
         self.sim = SimulationEnv()
         
         # 报告中的 S、T、R、wT，保留 global 作为旧代码兼容别名。
@@ -159,6 +168,8 @@ class SchedulingEnv(gym.Env):
         
         # 3. 执行调度结果
         scheduled_count = 0
+        if self.max_assignments_per_step is not None:
+            decisions = decisions[: self.max_assignments_per_step]
         for task, resource in decisions:
             if resource.status == ResourceStatus.IDLE and task.status == TaskStatus.READY:
                 self.sim._execute_task(task, resource)

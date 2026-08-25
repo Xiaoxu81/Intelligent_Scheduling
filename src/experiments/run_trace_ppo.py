@@ -25,6 +25,7 @@ def run_trace_training(
     expert_data=None,
     bc_epochs: int = 0,
     resume_from: Optional[Union[str, Path]] = None,
+    max_assignments_per_step: Optional[int] = 1,
 ) -> Dict[str, Any]:
     if episodes < 1 or max_steps < 1:
         raise ValueError("episodes and max_steps must be positive")
@@ -34,7 +35,13 @@ def run_trace_training(
     if not traces or any(not isinstance(item, AlibabaTrace) for item in traces):
         raise ValueError("trace must be an AlibabaTrace or a non-empty sequence of AlibabaTrace objects")
     strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
-    env = TraceSchedulingEnv(traces[0], max_queue_size=10, max_resource_size=4, strategy_ids=strategy_ids)
+    env = TraceSchedulingEnv(
+        traces[0],
+        max_queue_size=10,
+        max_resource_size=4,
+        strategy_ids=strategy_ids,
+        max_assignments_per_step=max_assignments_per_step,
+    )
     agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=k_epochs)
     if resume_from is not None:
         resume_path = Path(resume_from)
@@ -118,9 +125,16 @@ def evaluate_trace_policy(
     max_steps: int = 200,
     seed: int = 0,
     strategy_ids=None,
+    max_assignments_per_step: Optional[int] = 1,
 ) -> Dict[str, Any]:
     strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
-    env = TraceSchedulingEnv(trace, max_queue_size=10, max_resource_size=4, strategy_ids=strategy_ids)
+    env = TraceSchedulingEnv(
+        trace,
+        max_queue_size=10,
+        max_resource_size=4,
+        strategy_ids=strategy_ids,
+        max_assignments_per_step=max_assignments_per_step,
+    )
     agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=1)
     state = torch.load(model_path, map_location="cpu", weights_only=True)
     agent.model.load_state_dict(state)
@@ -164,6 +178,7 @@ def main(args=None) -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--output", default="results/trace-ppo")
     parser.add_argument("--resume-from")
+    parser.add_argument("--max-assignments-per-step", type=int, default=1)
     parsed = parser.parse_args(args)
     trace = load_v2018_rows(
         parsed.machine_meta,
@@ -182,6 +197,7 @@ def main(args=None) -> None:
         k_epochs=parsed.k_epochs,
         strategy_ids=parsed.strategies,
         resume_from=parsed.resume_from,
+        max_assignments_per_step=parsed.max_assignments_per_step,
     )
     print(json.dumps({"episodes": len(result["episodes"]), "output": parsed.output}, indent=2))
 

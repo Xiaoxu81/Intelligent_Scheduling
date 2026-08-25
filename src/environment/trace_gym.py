@@ -14,6 +14,7 @@ class TraceSchedulingEnv(SchedulingEnv):
         max_queue_size: int = 10,
         max_resource_size: int = 4,
         strategy_ids: Optional[Iterable[str]] = None,
+        max_assignments_per_step: Optional[int] = None,
     ):
         self.trace = trace
         requested_strategy_ids = list(strategy_ids or [f"C{i:02d}" for i in range(1, 13)])
@@ -25,6 +26,7 @@ class TraceSchedulingEnv(SchedulingEnv):
             max_queue_size=max_queue_size,
             max_resource_size=max_resource_size,
             num_strategies=len(requested_strategy_ids),
+            max_assignments_per_step=max_assignments_per_step,
         )
         self.strategy_ids = requested_strategy_ids
 
