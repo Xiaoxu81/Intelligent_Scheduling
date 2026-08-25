@@ -1,0 +1,602 @@
+{
+  "fixed_vs_ppo": [
+    {
+      "window": "150000-160000",
+      "strategy": "C01",
+      "metrics": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "is_best": true
+    },
+    {
+      "window": "150000-160000",
+      "strategy": "C03",
+      "metrics": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "150000-160000",
+      "strategy": "C05",
+      "metrics": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "150000-160000",
+      "strategy": "C04",
+      "metrics": {
+        "average_completion_time": 115.19110112359553,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "150000-160000",
+      "strategy": "C09",
+      "metrics": {
+        "average_completion_time": 115.19110112359553,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 95.71919101123598,
+        "throughput": 0.009045634718975506,
+        "resource_utilization": 0.1457467222278687,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "200000-210000",
+      "strategy": "C01",
+      "metrics": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "is_best": true
+    },
+    {
+      "window": "200000-210000",
+      "strategy": "C03",
+      "metrics": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "200000-210000",
+      "strategy": "C05",
+      "metrics": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "200000-210000",
+      "strategy": "C04",
+      "metrics": {
+        "average_completion_time": 87.60015000000003,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "200000-210000",
+      "strategy": "C09",
+      "metrics": {
+        "average_completion_time": 87.60015000000003,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 84.01277500000006,
+        "throughput": 0.008868196430550937,
+        "resource_utilization": 0.19271715996009314,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "250000-260000",
+      "strategy": "C04",
+      "metrics": {
+        "average_completion_time": 68.8586956521739,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "is_best": true
+    },
+    {
+      "window": "250000-260000",
+      "strategy": "C09",
+      "metrics": {
+        "average_completion_time": 68.8586956521739,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "250000-260000",
+      "strategy": "C01",
+      "metrics": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "250000-260000",
+      "strategy": "C03",
+      "metrics": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "250000-260000",
+      "strategy": "C05",
+      "metrics": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "260000-270000",
+      "strategy": "C01",
+      "metrics": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "is_best": true
+    },
+    {
+      "window": "260000-270000",
+      "strategy": "C03",
+      "metrics": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "260000-270000",
+      "strategy": "C05",
+      "metrics": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "260000-270000",
+      "strategy": "C04",
+      "metrics": {
+        "average_completion_time": 389.14475,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    },
+    {
+      "window": "260000-270000",
+      "strategy": "C09",
+      "metrics": {
+        "average_completion_time": 389.14475,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "ppo": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "is_best": false
+    }
+  ],
+  "metrics": [
+    {
+      "window": "150000-160000",
+      "method": "PPO",
+      "average_completion_time": 95.71919101123598,
+      "throughput": 0.009045634718975506,
+      "resource_utilization": 0.1457467222278687,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "150000-160000",
+      "method": "fixed:C01",
+      "average_completion_time": 95.71919101123598,
+      "throughput": 0.009045634718975506,
+      "resource_utilization": 0.1457467222278687,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "150000-160000",
+      "method": "fixed:C03",
+      "average_completion_time": 95.71919101123598,
+      "throughput": 0.009045634718975506,
+      "resource_utilization": 0.1457467222278687,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "150000-160000",
+      "method": "fixed:C05",
+      "average_completion_time": 95.71919101123598,
+      "throughput": 0.009045634718975506,
+      "resource_utilization": 0.1457467222278687,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "150000-160000",
+      "method": "fixed:C04",
+      "average_completion_time": 115.19110112359553,
+      "throughput": 0.009045634718975506,
+      "resource_utilization": 0.1457467222278687,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "150000-160000",
+      "method": "fixed:C09",
+      "average_completion_time": 115.19110112359553,
+      "throughput": 0.009045634718975506,
+      "resource_utilization": 0.1457467222278687,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "method": "PPO",
+      "average_completion_time": 84.01277500000006,
+      "throughput": 0.008868196430550937,
+      "resource_utilization": 0.19271715996009314,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "method": "fixed:C01",
+      "average_completion_time": 84.01277500000006,
+      "throughput": 0.008868196430550937,
+      "resource_utilization": 0.19271715996009314,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "method": "fixed:C03",
+      "average_completion_time": 84.01277500000006,
+      "throughput": 0.008868196430550937,
+      "resource_utilization": 0.19271715996009314,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "method": "fixed:C05",
+      "average_completion_time": 84.01277500000006,
+      "throughput": 0.008868196430550937,
+      "resource_utilization": 0.19271715996009314,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "method": "fixed:C04",
+      "average_completion_time": 87.60015000000003,
+      "throughput": 0.008868196430550937,
+      "resource_utilization": 0.19271715996009314,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "method": "fixed:C09",
+      "average_completion_time": 87.60015000000003,
+      "throughput": 0.008868196430550937,
+      "resource_utilization": 0.19271715996009314,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "method": "PPO",
+      "average_completion_time": 69.44565217391305,
+      "throughput": 0.010193905817174515,
+      "resource_utilization": 0.17501385041551246,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "method": "fixed:C04",
+      "average_completion_time": 68.8586956521739,
+      "throughput": 0.010193905817174515,
+      "resource_utilization": 0.17501385041551246,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "method": "fixed:C09",
+      "average_completion_time": 68.8586956521739,
+      "throughput": 0.010193905817174515,
+      "resource_utilization": 0.17501385041551246,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "method": "fixed:C01",
+      "average_completion_time": 69.44565217391305,
+      "throughput": 0.010193905817174515,
+      "resource_utilization": 0.17501385041551246,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "method": "fixed:C03",
+      "average_completion_time": 69.44565217391305,
+      "throughput": 0.010193905817174515,
+      "resource_utilization": 0.17501385041551246,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "method": "fixed:C05",
+      "average_completion_time": 69.44565217391305,
+      "throughput": 0.010193905817174515,
+      "resource_utilization": 0.17501385041551246,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "260000-270000",
+      "method": "PPO",
+      "average_completion_time": 355.7500131578947,
+      "throughput": 0.005520447446793056,
+      "resource_utilization": 0.4331372484927726,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "260000-270000",
+      "method": "fixed:C01",
+      "average_completion_time": 355.7500131578947,
+      "throughput": 0.005520447446793056,
+      "resource_utilization": 0.4331372484927726,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "260000-270000",
+      "method": "fixed:C03",
+      "average_completion_time": 355.7500131578947,
+      "throughput": 0.005520447446793056,
+      "resource_utilization": 0.4331372484927726,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "260000-270000",
+      "method": "fixed:C05",
+      "average_completion_time": 355.7500131578947,
+      "throughput": 0.005520447446793056,
+      "resource_utilization": 0.4331372484927726,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "260000-270000",
+      "method": "fixed:C04",
+      "average_completion_time": 389.14475,
+      "throughput": 0.005520447446793056,
+      "resource_utilization": 0.4331372484927726,
+      "failure_rate": 0.0
+    },
+    {
+      "window": "260000-270000",
+      "method": "fixed:C09",
+      "average_completion_time": 389.14475,
+      "throughput": 0.005520447446793056,
+      "resource_utilization": 0.4331372484927726,
+      "failure_rate": 0.0
+    }
+  ],
+  "normal_vs_fault": [
+    {
+      "window": "250000-260000",
+      "scenario": "unseen-fault",
+      "normal": {
+        "average_completion_time": 69.44565217391305,
+        "throughput": 0.010193905817174515,
+        "resource_utilization": 0.17501385041551246,
+        "failure_rate": 0.0
+      },
+      "fault": {
+        "average_completion_time": 56.61904761904762,
+        "throughput": 0.009307479224376731,
+        "resource_utilization": 0.15850415512465374,
+        "failure_rate": 0.010869565217391304
+      }
+    },
+    {
+      "window": "260000-270000",
+      "scenario": "unseen-fault",
+      "normal": {
+        "average_completion_time": 355.7500131578947,
+        "throughput": 0.005520447446793056,
+        "resource_utilization": 0.4331372484927726,
+        "failure_rate": 0.0
+      },
+      "fault": {
+        "average_completion_time": 359.64001333333334,
+        "throughput": 0.005447809980387884,
+        "resource_utilization": 0.43237455509551825,
+        "failure_rate": 0.013157894736842105
+      }
+    }
+  ],
+  "improvement": [
+    {
+      "window": "150000-160000",
+      "best_fixed_strategy": "C01",
+      "ppo_average_completion_time": 95.71919101123598,
+      "best_fixed_average_completion_time": 95.71919101123598,
+      "improvement_percent": 0.0
+    },
+    {
+      "window": "200000-210000",
+      "best_fixed_strategy": "C01",
+      "ppo_average_completion_time": 84.01277500000006,
+      "best_fixed_average_completion_time": 84.01277500000006,
+      "improvement_percent": 0.0
+    },
+    {
+      "window": "250000-260000",
+      "best_fixed_strategy": "C04",
+      "ppo_average_completion_time": 69.44565217391305,
+      "best_fixed_average_completion_time": 68.8586956521739,
+      "improvement_percent": -0.8524072612470538
+    },
+    {
+      "window": "260000-270000",
+      "best_fixed_strategy": "C01",
+      "ppo_average_completion_time": 355.7500131578947,
+      "best_fixed_average_completion_time": 355.7500131578947,
+      "improvement_percent": 0.0
+    }
+  ]
+}
