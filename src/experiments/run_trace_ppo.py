@@ -7,6 +7,7 @@ import torch
 
 from src.environment.trace_gym import TraceSchedulingEnv
 from src.experiments.alibaba_trace import AlibabaTrace, load_v2018_rows
+from src.experiments.metrics import collect_metrics
 from src.models.drl_agent import PPOAgent
 
 
@@ -77,6 +78,40 @@ def run_trace_training(
         )
         torch.save(agent.model.state_dict(), output_path / "ppo_model.pt")
     return result
+
+
+def evaluate_trace_policy(
+    trace: AlibabaTrace,
+    model_path: Union[str, Path],
+    max_steps: int = 200,
+    seed: int = 0,
+) -> Dict[str, Any]:
+    env = TraceSchedulingEnv(trace, max_queue_size=10, max_resource_size=4)
+    agent = PPOAgent(max_queue_size=10, K_epochs=1)
+    state = torch.load(model_path, map_location="cpu")
+    agent.model.load_state_dict(state)
+    agent.model_old.load_state_dict(state)
+
+    obs, _ = env.reset(seed=seed)
+    usage = [0] * agent.num_strategies
+    terminated = False
+    truncated = False
+    for _ in range(max_steps):
+        action = int(agent.get_strategy_probs(obs).argmax())
+        usage[action] += 1
+        obs, _, terminated, truncated, _ = env.step(action)
+        if terminated or truncated:
+            break
+    if not terminated and not truncated:
+        truncated = True
+    return {
+        "data_source": trace.metadata.get("data_source", "trace"),
+        "metrics": collect_metrics(env.sim),
+        "steps": sum(usage),
+        "terminated": terminated,
+        "truncated": truncated,
+        "strategy_usage": {f"C{i + 1:02d}": count for i, count in enumerate(usage)},
+    }
 
 
 def main(args=None) -> None:
