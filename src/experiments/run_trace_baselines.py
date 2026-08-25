@@ -35,14 +35,20 @@ def _run_one(
     env = SimulationEnv(scheduler=get_scheduler_by_id(strategy_id))
     for resource in copy.deepcopy(trace.resources):
         env.add_resource(resource)
-    for task in copy.deepcopy(trace.tasks):
+    tasks = copy.deepcopy(trace.tasks)
+    time_origin = min((task.arrival_time for task in tasks), default=0.0)
+    for task in tasks:
+        task.arrival_time -= time_origin
+        task.wait_start_time = task.arrival_time
+        if task.deadline is not None:
+            task.deadline -= time_origin
         env.add_task(task)
     if fault_resource and fault_at is not None:
         if fault_resource not in env.resources:
             raise ValueError(f"fault_resource {fault_resource!r} is not in selected resources")
         env.inject_resource_fault(
             fault_resource,
-            delay=max(0.0, fault_at),
+            delay=max(0.0, fault_at - time_origin),
             duration=max(0.0, fault_duration),
         )
     while env.event_queue:
@@ -94,6 +100,7 @@ def run_trace_baselines(
         limit_tasks=None,
         limit_resources=None,
     )
+    trace.metadata["time_origin"] = min((task.arrival_time for task in trace.tasks), default=0.0)
     summary = {}
     task_rows = []
     for strategy_id in strategies:

@@ -59,3 +59,20 @@ def test_trace_runner_records_controlled_fault_metrics(tmp_path):
     payload = __import__("json").loads((output / "result.json").read_text(encoding="utf-8"))
     assert payload["metadata"]["fault_profile"] == "trace_workload_controlled_fault"
     assert payload["summary"]["C01"]["failure_rate"] > 0
+
+
+def test_trace_runner_rebases_absolute_time_for_metrics(tmp_path):
+    machine_path = tmp_path / "machine_meta.csv"
+    task_path = tmp_path / "batch_task.csv"
+    machine_path.write_text("M1,0,fd-a,fd-b,8,64,ONLINE\n", encoding="utf-8")
+    task_path.write_text(
+        "task_name,instance_num,job_name,task_type,status,start_time,end_time,plan_cpu,plan_mem\n"
+        "task1,1,jobA,M,Terminated,100,105,100,10\n",
+        encoding="utf-8",
+    )
+
+    output = tmp_path / "relative-results"
+    run_trace_baselines(machine_path, task_path, output, strategies=["C01"])
+
+    payload = __import__("json").loads((output / "result.json").read_text(encoding="utf-8"))
+    assert payload["summary"]["C01"]["throughput"] > 0.1
