@@ -84,3 +84,5 @@ trace PPO 默认只在报告候选集 `C01 C03 C04 C05 C09` 中选择；可通�
 网络进一步对任务嵌入使用平均池化和最大池化联合表示，结果保存在 `results/trace-mixed/ppo-rich-task-state/`；两个窗口结果仍为 69.45 和 355.75，说明当前瓶颈不是简单增加训练轮数或池化统计量，而是需要更细粒度的状态级策略切换机制。
 
 细粒度切换已实现：trace PPO 默认每个动作最多分配一个任务，下一动作可重新选择策略；固定策略也在相同粒度下重跑。结果保存在 `results/trace-mixed/ppo-fine-grained/` 和 `results/trace-mixed/fine-grained-baselines.json`：PPO 在 250000–260000 窗口为 68.8587，在 260000–270000 窗口为 355.7500，均达到对应窗口最优固定策略，但暂未超过。
+
+`src/experiments/trace_demonstrations.py` 进一步支持局部贪心专家标签：每个决策点重放历史并比较候选动作的即时回报。`results/trace-mixed/ppo-local-expert/` 的训练结果为 69.4457 和 355.7500，说明即时标签能保持泛化，但要超过固定策略还需要多步前瞻标签。

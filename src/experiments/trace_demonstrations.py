@@ -51,3 +51,61 @@ def generate_trace_demonstrations(
                 )
             )
     return rows
+
+
+def _replay_history(trace, strategy_ids, history):
+    env = TraceSchedulingEnv(
+        trace,
+        max_queue_size=10,
+        max_resource_size=4,
+        strategy_ids=strategy_ids,
+        max_assignments_per_step=1,
+    )
+    observation, _ = env.reset(seed=0)
+    for action in history:
+        observation, _, terminated, truncated, _ = env.step(action)
+        if terminated or truncated:
+            break
+    return env, observation
+
+
+def generate_local_trace_demonstrations(
+    traces: Iterable[AlibabaTrace], strategy_ids: Iterable[str], max_steps: int = 500
+) -> List[Tuple[Dict[str, np.ndarray], int, Dict[str, object]]]:
+    """Label each fine-grained decision with the best immediate candidate action."""
+    traces = list(traces)
+    strategy_ids = list(strategy_ids)
+    if not traces or not strategy_ids:
+        raise ValueError("traces and strategy_ids must not be empty")
+    if max_steps < 1:
+        raise ValueError("max_steps must be positive")
+
+    rows = []
+    for trace in traces:
+        history = []
+        for _ in range(max_steps):
+            current_env, observation = _replay_history(trace, strategy_ids, history)
+            if all(task.status.value in {"completed", "failed"} for task in current_env.sim.tasks.values()):
+                break
+            scored = []
+            for action in range(len(strategy_ids)):
+                candidate_env, _ = _replay_history(trace, strategy_ids, history)
+                _, reward, terminated, truncated, _ = candidate_env.step(action)
+                scored.append((float(reward), -action, terminated, truncated))
+            _, negative_action, _, _ = max(scored)
+            action = -negative_action
+            rows.append(
+                (
+                    {key: np.array(value, copy=True) for key, value in observation.items()},
+                    action,
+                    {
+                        "window": trace.metadata.get("window", trace.metadata.get("time_window", "unknown")),
+                        "label_type": "local_greedy",
+                        "strategy_id": strategy_ids[action],
+                    },
+                )
+            )
+            history.append(action)
+            if scored[action][2] or scored[action][3]:
+                break
+    return rows
