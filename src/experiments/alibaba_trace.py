@@ -112,7 +112,13 @@ def load_v2018_rows(
     limit_jobs: Optional[int] = None,
     complete_jobs: bool = True,
 ) -> AlibabaTrace:
-    machine_rows = list(_read_rows(machine_meta_path, MACHINE_META_COLUMNS, delimiter, limit_resources))
+    machine_events = list(_read_rows(machine_meta_path, MACHINE_META_COLUMNS, delimiter))
+    unique_machine_rows = {}
+    for row in machine_events:
+        unique_machine_rows.setdefault(row["machine_id"], row)
+    machine_rows = list(unique_machine_rows.values())
+    if limit_resources is not None:
+        machine_rows = machine_rows[:limit_resources]
     task_rows = _select_task_rows(
         batch_task_path,
         delimiter,

@@ -64,3 +64,19 @@ def test_alibaba_v2018_loader_selects_time_window_and_collapses_instances(tmp_pa
     assert [task.task_id for task in trace.tasks] == ["j1:M1", "j1:M2_1"]
     assert trace.tasks[0].arrival_time == 10
     assert trace.tasks[0].duration == 5
+
+
+def test_alibaba_v2018_loader_limits_unique_machines_not_machine_events(tmp_path):
+    machine_path = tmp_path / "machine_meta.csv"
+    task_path = tmp_path / "batch_task.csv"
+    machine_path.write_text(
+        "M1,0,1,fd-a,8,64,ONLINE\n"
+        "M1,10,1,fd-a,8,64,ONLINE\n"
+        "M2,0,1,fd-b,8,64,ONLINE\n",
+        encoding="utf-8",
+    )
+    task_path.write_text("M1,1,j1,1,Terminated,0,1,100,10\n", encoding="utf-8")
+
+    trace = load_v2018_rows(machine_path, task_path, limit_resources=2)
+
+    assert [resource.resource_id for resource in trace.resources] == ["M1", "M2"]
