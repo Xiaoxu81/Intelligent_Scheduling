@@ -29,6 +29,7 @@ def run_trace_training(
     fault_resource: Optional[str] = None,
     fault_at: Optional[float] = None,
     fault_duration: float = 0.0,
+    fault_profiles=None,
 ) -> Dict[str, Any]:
     if episodes < 1 or max_steps < 1:
         raise ValueError("episodes and max_steps must be positive")
@@ -38,15 +39,22 @@ def run_trace_training(
     if not traces or any(not isinstance(item, AlibabaTrace) for item in traces):
         raise ValueError("trace must be an AlibabaTrace or a non-empty sequence of AlibabaTrace objects")
     strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
+    if fault_profiles is None:
+        fault_profiles = [{"resource": fault_resource, "at": fault_at, "duration": fault_duration}]
+    else:
+        fault_profiles = [dict(profile) for profile in fault_profiles]
+        if not fault_profiles:
+            raise ValueError("fault_profiles must not be empty")
+    initial_fault = fault_profiles[0]
     env = TraceSchedulingEnv(
         traces[0],
         max_queue_size=10,
         max_resource_size=4,
         strategy_ids=strategy_ids,
         max_assignments_per_step=max_assignments_per_step,
-        fault_resource=fault_resource,
-        fault_at=fault_at,
-        fault_duration=fault_duration,
+        fault_resource=initial_fault.get("resource"),
+        fault_at=initial_fault.get("at"),
+        fault_duration=initial_fault.get("duration", 0.0),
     )
     agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=k_epochs)
     if resume_from is not None:
@@ -70,6 +78,10 @@ def run_trace_training(
 
     for episode in range(episodes):
         env.trace = traces[episode % len(traces)]
+        episode_fault = fault_profiles[episode % len(fault_profiles)]
+        env.fault_resource = episode_fault.get("resource")
+        env.fault_at = episode_fault.get("at")
+        env.fault_duration = episode_fault.get("duration", 0.0)
         obs, _ = env.reset(seed=seed + episode)
         memory = []
         reward_total = 0.0
@@ -114,10 +126,11 @@ def run_trace_training(
         "behavior_cloning": {"enabled": bool(bc_epochs), "epochs": bc_epochs, "samples": len(expert_data or [])},
         "resumed_from": str(resume_from) if resume_from is not None else None,
         "fault_profile": {
-            "resource": fault_resource,
-            "at": fault_at,
-            "duration": fault_duration if fault_resource is not None else None,
+            "resource": initial_fault.get("resource"),
+            "at": initial_fault.get("at"),
+            "duration": initial_fault.get("duration") if initial_fault.get("resource") is not None else None,
         },
+        "fault_profiles": fault_profiles,
         "strategy_usage": {strategy_id: count for strategy_id, count in zip(strategy_ids, strategy_usage)},
     }
     if output_dir is not None:

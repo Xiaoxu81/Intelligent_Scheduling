@@ -141,3 +141,25 @@ def test_trace_ppo_accepts_controlled_fault_configuration(tmp_path):
     )
 
     assert result["fault_profile"]["resource"] == "m1"
+
+
+def test_trace_ppo_can_cycle_normal_and_fault_profiles(tmp_path):
+    trace = AlibabaTrace(
+        tasks=[Task("j1:M1", priority=1, duration=1.0, arrival_time=0.0)],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "alibaba_cluster_trace_v2018"},
+    )
+
+    result = run_trace_training(
+        trace,
+        episodes=2,
+        max_steps=3,
+        k_epochs=1,
+        fault_profiles=[
+            {"resource": None, "at": None, "duration": 0.0},
+            {"resource": "m1", "at": 0.5, "duration": 1.0},
+        ],
+        output_dir=tmp_path,
+    )
+
+    assert len(result["fault_profiles"]) == 2
