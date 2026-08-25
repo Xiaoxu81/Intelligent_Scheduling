@@ -109,3 +109,69 @@ def generate_local_trace_demonstrations(
             if scored[action][2] or scored[action][3]:
                 break
     return rows
+
+
+def _lookahead_score(trace, strategy_ids, history, first_action, horizon):
+    future_history = list(history)
+    total_reward = 0.0
+    for depth in range(horizon):
+        if depth == 0:
+            action = first_action
+        else:
+            candidates = []
+            for candidate in range(len(strategy_ids)):
+                candidate_env, _ = _replay_history(trace, strategy_ids, future_history)
+                _, reward, terminated, truncated, _ = candidate_env.step(candidate)
+                candidates.append((float(reward), -candidate, terminated, truncated))
+            _, negative_action, _, _ = max(candidates)
+            action = -negative_action
+        env, _ = _replay_history(trace, strategy_ids, future_history)
+        _, reward, terminated, truncated, _ = env.step(action)
+        total_reward += float(reward)
+        future_history.append(action)
+        if terminated or truncated:
+            break
+    return total_reward
+
+
+def generate_lookahead_trace_demonstrations(
+    traces: Iterable[AlibabaTrace],
+    strategy_ids: Iterable[str],
+    horizon: int = 3,
+    max_steps: int = 500,
+) -> List[Tuple[Dict[str, np.ndarray], int, Dict[str, object]]]:
+    """Generate fine-grained labels using a short greedy rollout for each action."""
+    traces = list(traces)
+    strategy_ids = list(strategy_ids)
+    if not traces or not strategy_ids:
+        raise ValueError("traces and strategy_ids must not be empty")
+    if horizon < 1 or max_steps < 1:
+        raise ValueError("horizon and max_steps must be positive")
+
+    rows = []
+    for trace in traces:
+        history = []
+        for _ in range(max_steps):
+            current_env, observation = _replay_history(trace, strategy_ids, history)
+            if all(task.status.value in {"completed", "failed"} for task in current_env.sim.tasks.values()):
+                break
+            scored = [
+                (_lookahead_score(trace, strategy_ids, history, action, horizon), -action)
+                for action in range(len(strategy_ids))
+            ]
+            _, negative_action = max(scored)
+            action = -negative_action
+            rows.append(
+                (
+                    {key: np.array(value, copy=True) for key, value in observation.items()},
+                    action,
+                    {
+                        "window": trace.metadata.get("window", trace.metadata.get("time_window", "unknown")),
+                        "label_type": "lookahead_greedy",
+                        "horizon": horizon,
+                        "strategy_id": strategy_ids[action],
+                    },
+                )
+            )
+            history.append(action)
+    return rows
