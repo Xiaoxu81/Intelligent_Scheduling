@@ -181,11 +181,25 @@ class SchedulingEnv(gym.Env):
             if all(t.status in (TaskStatus.COMPLETED, TaskStatus.FAILED) for t in self.sim.tasks.values()):
                 terminated = True
                 if all(t.status == TaskStatus.COMPLETED for t in self.sim.tasks.values()):
+                    completion_times = [
+                        max(0.0, t.end_time - t.arrival_time)
+                        for t in self.sim.tasks.values()
+                        if t.end_time is not None
+                    ]
+                    if completion_times:
+                        reward -= sum(completion_times) / len(completion_times)
                     reward += 20.0
         else:
             # 所有任务完成
             if all(t.status == TaskStatus.COMPLETED for t in self.sim.tasks.values()):
                 terminated = True
+                completion_times = [
+                    max(0.0, t.end_time - t.arrival_time)
+                    for t in self.sim.tasks.values()
+                    if t.end_time is not None
+                ]
+                if completion_times:
+                    reward -= sum(completion_times) / len(completion_times)
                 reward += 20.0
 
         return self._get_obs(), reward, terminated, truncated, {}

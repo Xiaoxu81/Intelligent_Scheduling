@@ -50,3 +50,19 @@ def test_trace_environment_maps_restricted_strategy_actions():
     env.reset(seed=0)
     env.step(0)
     assert env.sim.scheduler is not None
+
+
+def test_trace_environment_rewards_shorter_completed_workload_more():
+    def run(duration):
+        trace = AlibabaTrace(
+            tasks=[Task("t1", priority=1, duration=duration, arrival_time=0.0)],
+            resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+            metadata={"data_source": "test"},
+        )
+        env = TraceSchedulingEnv(trace, strategy_ids=["C01"])
+        env.reset(seed=0)
+        _, reward, terminated, _, _ = env.step(0)
+        assert terminated is True
+        return reward
+
+    assert run(1.0) - run(10.0) > 5.0
