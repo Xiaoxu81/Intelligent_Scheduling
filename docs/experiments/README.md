@@ -98,3 +98,5 @@ trace PPO 默认只在报告候选集 `C01 C03 C04 C05 C09` 中选择；可通�
 为避免 PPO 更新冲掉细粒度专家标签，训练器新增 `bc_epochs_per_update` 专家约束。合成动态场景对比保存在 `results/synthetic-dynamic/ppo-regularized/comparison.json`：seed=80 上 PPO 为 10.6667，最优固定策略为 11.6667，提升 8.57%；seed=9 提升 2.78%；seed=12 提升 2.17%。同时记录了 seed=27/73/43 的退化结果，说明提升并非所有场景都稳定，需要在报告中同时呈现均值和方差。
 
 从该模型继续训练 500 个 episode 后，最终结果保存在 `results/synthetic-dynamic/ppo-continued/comparison.json`：seed=27、80、73、43、9、12 的 PPO 提升分别为 9.72%、8.57%、10.53%、2.00%、2.78%、2.17%，六个测试场景全部超过最优固定策略。该结论适用于合成动态混合任务集；Alibaba 真实 trace 上目前仍以达到最优固定策略为主，不能混用两类结论。
+
+真实四窗口使用多步专家标签和每轮专家约束的复现实验保存在 `results/trace-four-windows/ppo-regularized/`；四个窗口仍为 95.7192、84.0128、69.4457、355.7500，均与同粒度最优固定策略持平。该结果表明当前 Alibaba 子集缺少足够的策略切换收益，不能通过继续增加训练轮数强行制造提升。
