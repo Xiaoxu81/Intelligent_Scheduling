@@ -46,3 +46,21 @@ python -m src.experiments.run_trace_baselines `
 该入口会生成 `result.json`、`strategies.json` 和 `tasks.csv`，并在 metadata 中记录数据来源、输入路径、时间窗口、完整作业筛选、样本限制和策略列表。默认会按 `job_name/task_name` 合并同一任务的多个实例，避免 DAG 节点被重复覆盖。
 
 真实 trace 没有订单截止期字段，因此 `deadline_satisfaction_rate` 不能作为该数据集上的有效结论；应重点报告完成时间、吞吐量、资源利用率和故障恢复指标。真实 trace 的 `batch_task` 是集群批任务数据，不能直接当作供应链订单数据；论文中应将它作为调度方法的生产集群验证数据，并与仿真数据分开报告。
+
+## 真实 trace PPO smoke
+
+```powershell
+python -m src.experiments.run_trace_ppo `
+  --machine-meta D:\data\machine_meta.csv `
+  --batch-task D:\data\batch_task.csv `
+  --start-time 150000 `
+  --end-time 160000 `
+  --limit-jobs 20 `
+  --limit-resources 2 `
+  --episodes 3 `
+  --max-steps 50 `
+  --k-epochs 1 `
+  --output results/trace-ppo/smoke
+```
+
+该命令用于验证真实 `S/T/R/wT` 状态能够进入 PPO 训练流程。正式实验需要增加 episode、设置独立验证窗口，并与固定策略在相同 trace 窗口上比较。
