@@ -2,6 +2,8 @@
 
 当前实验数据全部来自本地可复现仿真，不包含真实企业生产数据，也不是从互联网下载的数据。
 
+真实数据适配器已按 Alibaba Cluster Trace v2018 的公开 schema 实现。原始数据需要用户从 [Alibaba Cluster Trace Program](https://github.com/alibaba/clusterdata/tree/master/cluster-trace-v2018) 按其发布页面说明获取；原始压缩包很大，不应提交到本仓库。
+
 ## 数据生成链路
 
 1. `src/experiments/scenarios.py` 使用固定随机种子生成任务、资源、依赖、截止期和任务目标权重。
@@ -10,6 +12,8 @@
 4. `src/experiments/run_baselines.py` 和 `src/experiments/run_ppo.py` 保存实验配置、随机种子和训练/评价结果。
 
 每个结果文件的 `metadata.data_source` 应为 `synthetic_simulation`。在报告中，这些结果只能用于说明方法原型和仿真验证，不能表述为真实产业链数据结论。
+
+当使用 `src/experiments/alibaba_trace.py` 读取真实 trace 后，结果元数据应改为 `alibaba_cluster_trace_v2018`，并在论文中说明它是生产集群调度数据，不是产业链订单数据。
 
 ## 当前仿真数据规模
 
