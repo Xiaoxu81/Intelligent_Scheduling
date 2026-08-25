@@ -94,3 +94,5 @@ trace PPO 默认只在报告候选集 `C01 C03 C04 C05 C09` 中选择；可通�
 真实轨迹故障训练也已接入：`TraceSchedulingEnv` 支持 `fault_resource/fault_at/fault_duration`，故障结果保存在 `results/trace-fault/`。在 m_1 相对时间 50 故障 30 秒的设置下，PPO 在第一个窗口达到 55.9762，与最优固定策略持平；第二个窗口为 402.0137，低于 C01/C03/C05 的 359.64，说明故障自适应需要正常/故障混合训练和更多故障位置消融。
 
 训练器现在支持 `fault_profiles` 轮换正常、早期故障和晚期故障。混合训练结果保存在 `results/trace-mixed-fault/`；对未参与训练的相对时间 50 故障，两个窗口 PPO 分别为 56.6190 和 359.6400，第二窗口已达到最优固定策略，第一窗口距离 55.9762 约 1.15%。
+
+为避免 PPO 更新冲掉细粒度专家标签，训练器新增 `bc_epochs_per_update` 专家约束。合成动态场景对比保存在 `results/synthetic-dynamic/ppo-regularized/comparison.json`：seed=80 上 PPO 为 10.6667，最优固定策略为 11.6667，提升 8.57%；seed=9 提升 2.78%；seed=12 提升 2.17%。同时记录了 seed=27/73/43 的退化结果，说明提升并非所有场景都稳定，需要在报告中同时呈现均值和方差。

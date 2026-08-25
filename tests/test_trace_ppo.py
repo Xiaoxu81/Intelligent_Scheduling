@@ -1,3 +1,5 @@
+import numpy as np
+
 from src.experiments.alibaba_trace import AlibabaTrace
 from src.experiments.run_trace_ppo import evaluate_trace_policy, run_trace_training
 from src.models.resource import Resource
@@ -163,3 +165,36 @@ def test_trace_ppo_can_cycle_normal_and_fault_profiles(tmp_path):
     )
 
     assert len(result["fault_profiles"]) == 2
+
+
+def test_trace_ppo_can_keep_expert_regularization_during_updates(tmp_path):
+    trace = AlibabaTrace(
+        tasks=[Task("j1:M1", priority=1, duration=1.0, arrival_time=0.0)],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "alibaba_cluster_trace_v2018"},
+    )
+    expert_data = [
+        (
+            {
+                "tasks": np.zeros((10, 9), dtype=np.float32),
+                "system": np.zeros(6, dtype=np.float32),
+                "resources": np.zeros((4, 5), dtype=np.float32),
+                "weights": np.full(4, 0.25, dtype=np.float32),
+            },
+            0,
+            {},
+        )
+    ]
+
+    result = run_trace_training(
+        trace,
+        episodes=1,
+        max_steps=3,
+        k_epochs=1,
+        expert_data=expert_data,
+        bc_epochs=1,
+        bc_epochs_per_update=1,
+        output_dir=tmp_path,
+    )
+
+    assert result["behavior_cloning"]["epochs_per_update"] == 1

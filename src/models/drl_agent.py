@@ -19,7 +19,7 @@ class ActorCritic(nn.Module):
         )
         
         # 综合特征处理层
-        combined_dim = 64 + system_feat_dim + resource_feat_dim + weight_feat_dim
+        combined_dim = 96 + system_feat_dim + resource_feat_dim + weight_feat_dim
         self.common = nn.Sequential(
             nn.Linear(combined_dim, 128),
             nn.ReLU(),
@@ -47,7 +47,8 @@ class ActorCritic(nn.Module):
         # 同时保留平均负载和极值负载，避免少量长任务被平均值掩盖。
         t_mean = torch.mean(t_embeds, dim=1) # (batch, 32)
         t_max = torch.max(t_embeds, dim=1).values # (batch, 32)
-        t_agg = torch.cat([t_mean, t_max], dim=1) # (batch, 64)
+        t_first = t_embeds[:, 0, :] # (batch, 32)
+        t_agg = torch.cat([t_mean, t_max, t_first], dim=1) # (batch, 96)
         
         resource_agg = torch.mean(resources, dim=1)
         combined = torch.cat([t_agg, system, resource_agg, weights], dim=1)

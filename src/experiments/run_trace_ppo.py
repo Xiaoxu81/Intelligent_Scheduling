@@ -24,6 +24,7 @@ def run_trace_training(
     strategy_ids=None,
     expert_data=None,
     bc_epochs: int = 0,
+    bc_epochs_per_update: int = 0,
     resume_from: Optional[Union[str, Path]] = None,
     max_assignments_per_step: Optional[int] = 1,
     fault_resource: Optional[str] = None,
@@ -66,6 +67,8 @@ def run_trace_training(
         agent.model_old.load_state_dict(state)
     if bc_epochs < 0:
         raise ValueError("bc_epochs must be non-negative")
+    if bc_epochs_per_update < 0:
+        raise ValueError("bc_epochs_per_update must be non-negative")
     if bc_epochs and not expert_data:
         raise ValueError("expert_data is required when bc_epochs is positive")
     if bc_epochs:
@@ -107,6 +110,8 @@ def run_trace_training(
             truncated = True
         if memory:
             agent.update(memory)
+            if expert_data and bc_epochs_per_update:
+                agent.pretrain_bc([(row[0], row[1]) for row in expert_data], epochs=bc_epochs_per_update)
         logs.append({
             "episode": episode + 1,
             "episode_reward": reward_total,
@@ -123,7 +128,12 @@ def run_trace_training(
         "seed": seed,
         "episodes": logs,
         "strategy_ids": strategy_ids,
-        "behavior_cloning": {"enabled": bool(bc_epochs), "epochs": bc_epochs, "samples": len(expert_data or [])},
+        "behavior_cloning": {
+            "enabled": bool(bc_epochs or bc_epochs_per_update),
+            "epochs": bc_epochs,
+            "epochs_per_update": bc_epochs_per_update,
+            "samples": len(expert_data or []),
+        },
         "resumed_from": str(resume_from) if resume_from is not None else None,
         "fault_profile": {
             "resource": initial_fault.get("resource"),
