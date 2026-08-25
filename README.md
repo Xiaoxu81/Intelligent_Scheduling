@@ -31,7 +31,7 @@ python -m src.experiments.aggregate results/baselines-multiseed/seed1/strategies
 To run the same strategies on a local Alibaba Cluster Trace v2018 subset:
 
 ```powershell
-python -m src.experiments.run_trace_baselines --machine-meta D:\data\machine_meta.csv --batch-task D:\data\batch_task.csv --limit-tasks 500 --limit-resources 50 --output results/trace-baselines/subset1
+python -m src.experiments.run_trace_baselines --machine-meta D:\data\machine_meta.csv --batch-task D:\data\batch_task.csv --start-time 150000 --end-time 160000 --limit-jobs 20 --limit-resources 10 --output results/trace-baselines/subset1
 ```
 
 Raw trace files are intentionally kept outside the repository. See `docs/experiments/README.md` for provenance and interpretation notes.
