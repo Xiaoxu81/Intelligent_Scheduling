@@ -32,5 +32,11 @@ def test_drl_interaction():
     print(f"\nInteraction test finished. Total steps: {steps}, Final Reward: {total_reward:.2f}")
     print("--- DRL Agent Interaction Test Passed ---")
 
+
+def test_actor_critic_keeps_mean_and_max_task_summary():
+    agent = PPOAgent(max_queue_size=10)
+
+    assert agent.model.common[0].in_features == 64 + 6 + 5 + 4
+
 if __name__ == "__main__":
     test_drl_interaction()

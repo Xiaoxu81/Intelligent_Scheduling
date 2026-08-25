@@ -19,7 +19,7 @@ class ActorCritic(nn.Module):
         )
         
         # 综合特征处理层
-        combined_dim = 32 + system_feat_dim + resource_feat_dim + weight_feat_dim
+        combined_dim = 64 + system_feat_dim + resource_feat_dim + weight_feat_dim
         self.common = nn.Sequential(
             nn.Linear(combined_dim, 128),
             nn.ReLU(),
@@ -44,8 +44,10 @@ class ActorCritic(nn.Module):
         
         # 1. 任务特征嵌入与聚合
         t_embeds = self.task_embed(tasks) # (batch, max_queue_size, 32)
-        # 简单的平均池化聚合任务信息
-        t_agg = torch.mean(t_embeds, dim=1) # (batch, 32)
+        # 同时保留平均负载和极值负载，避免少量长任务被平均值掩盖。
+        t_mean = torch.mean(t_embeds, dim=1) # (batch, 32)
+        t_max = torch.max(t_embeds, dim=1).values # (batch, 32)
+        t_agg = torch.cat([t_mean, t_max], dim=1) # (batch, 64)
         
         resource_agg = torch.mean(resources, dim=1)
         combined = torch.cat([t_agg, system, resource_agg, weights], dim=1)
