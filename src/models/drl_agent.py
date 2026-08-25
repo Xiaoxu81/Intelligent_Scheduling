@@ -176,8 +176,8 @@ class PPOAgent:
                 "weights": states_weights,
             })
             
-            # 交叉熵损失：使 Actor 输出尽可能接近专家动作
-            loss = nn.functional.cross_entropy(probs, actions)
+            # probs 已经经过 softmax，因此使用负对数似然进行行为克隆。
+            loss = nn.functional.nll_loss(torch.log(probs + 1e-8), actions)
             
             self.optimizer.zero_grad()
             loss.backward()

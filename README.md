@@ -15,4 +15,11 @@ python -m src.experiments.run_baselines --seed 11 --tasks 6 --resources 2 --repe
 
 The runner evaluates reproducible candidate strategies and writes JSON/CSV artifacts under `results/`.
 
+To run a short PPO smoke experiment and save the training curve plus model checkpoint:
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+python -m src.experiments.run_ppo --seed 7 --episodes 5 --max-steps 30 --k-epochs 1 --output results/ppo
+```
+
 The research design and implementation plan are in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
