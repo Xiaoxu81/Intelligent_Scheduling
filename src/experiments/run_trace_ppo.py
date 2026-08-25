@@ -24,6 +24,7 @@ def run_trace_training(
     strategy_ids=None,
     expert_data=None,
     bc_epochs: int = 0,
+    resume_from: Optional[Union[str, Path]] = None,
 ) -> Dict[str, Any]:
     if episodes < 1 or max_steps < 1:
         raise ValueError("episodes and max_steps must be positive")
@@ -35,6 +36,13 @@ def run_trace_training(
     strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
     env = TraceSchedulingEnv(traces[0], max_queue_size=10, max_resource_size=4, strategy_ids=strategy_ids)
     agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=k_epochs)
+    if resume_from is not None:
+        resume_path = Path(resume_from)
+        if not resume_path.exists():
+            raise FileNotFoundError(resume_path)
+        state = torch.load(resume_path, map_location="cpu", weights_only=True)
+        agent.model.load_state_dict(state)
+        agent.model_old.load_state_dict(state)
     if bc_epochs < 0:
         raise ValueError("bc_epochs must be non-negative")
     if bc_epochs and not expert_data:
@@ -91,6 +99,7 @@ def run_trace_training(
         "episodes": logs,
         "strategy_ids": strategy_ids,
         "behavior_cloning": {"enabled": bool(bc_epochs), "epochs": bc_epochs, "samples": len(expert_data or [])},
+        "resumed_from": str(resume_from) if resume_from is not None else None,
         "strategy_usage": {strategy_id: count for strategy_id, count in zip(strategy_ids, strategy_usage)},
     }
     if output_dir is not None:
@@ -154,6 +163,7 @@ def main(args=None) -> None:
     parser.add_argument("--strategies", nargs="+", default=DEFAULT_STRATEGY_IDS)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--output", default="results/trace-ppo")
+    parser.add_argument("--resume-from")
     parsed = parser.parse_args(args)
     trace = load_v2018_rows(
         parsed.machine_meta,
@@ -171,6 +181,7 @@ def main(args=None) -> None:
         output_dir=parsed.output,
         k_epochs=parsed.k_epochs,
         strategy_ids=parsed.strategies,
+        resume_from=parsed.resume_from,
     )
     print(json.dumps({"episodes": len(result["episodes"]), "output": parsed.output}, indent=2))
 
