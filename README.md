@@ -28,6 +28,14 @@ To aggregate several baseline result files:
 python -m src.experiments.aggregate results/baselines-multiseed/seed1/strategies.json results/baselines-multiseed/seed2/strategies.json --output results/baselines-multiseed/aggregate.json
 ```
 
+To run the same strategies on a local Alibaba Cluster Trace v2018 subset:
+
+```powershell
+python -m src.experiments.run_trace_baselines --machine-meta D:\data\machine_meta.csv --batch-task D:\data\batch_task.csv --limit-tasks 500 --limit-resources 50 --output results/trace-baselines/subset1
+```
+
+Raw trace files are intentionally kept outside the repository. See `docs/experiments/README.md` for provenance and interpretation notes.
+
 The plotting helpers create comparison and PPO reward PNGs from the saved JSON files.
 
 The research design and implementation plan are in `docs/superpowers/specs/` and `docs/superpowers/plans/`.

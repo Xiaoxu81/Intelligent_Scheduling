@@ -1,7 +1,7 @@
-import heapq
 from src.models.task import Task
 from src.models.resource import Resource
-from src.environment.simulation import SimulationEnv, Event
+from src.environment.simulation import Event, SimulationEnv
+from src.strategies.heuristics import get_scheduler_by_id
 
 
 def test_event_can_be_ordered_against_simpy_queue_entry():
@@ -9,7 +9,7 @@ def test_event_can_be_ordered_against_simpy_queue_entry():
     assert event < (3.0, 0, object())
 
 def test_basic_simulation():
-    env = SimulationEnv()
+    env = SimulationEnv(scheduler=get_scheduler_by_id("C01"))
     
     # 添加资源
     res = Resource("R1", "CPU")
@@ -24,18 +24,11 @@ def test_basic_simulation():
     # 步进到任务到达
     env.step()
     assert env.current_time == 5.0
-    assert task.status.value == "READY"
+    assert task.status.value == "RUNNING"
     
-    # 手动模拟调度决策：将 T1 分配给 R1
-    # 在真实系统中，这将由调度器触发
-    res.status = "BUSY"
-    task.status = "RUNNING"
-    task.start_time = env.current_time
-    completion_time = env.current_time + task.duration
-    heapq.heappush(env.event_queue, Event(completion_time, "TASK_COMPLETION", ("T1", "R1")))
-    
-    # 步进到任务完成
-    env.step()
+    # 由真实调度器分配并推进到任务完成
+    while env.event_queue:
+        env.step()
     assert env.current_time == 15.0
     assert task.status.value == "COMPLETED"
     

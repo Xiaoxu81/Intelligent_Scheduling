@@ -25,3 +25,20 @@
 $env:PYTHONPATH = (Get-Location).Path
 python -m src.experiments.run_baselines --seed 1 --tasks 8 --resources 2 --repeats 3 --fault-profile single --output results/baselines-fault/seed1
 ```
+
+## 真实 trace 子集实验
+
+下载并解压 Alibaba Cluster Trace v2018 后，只把本地文件路径传给入口；原始数据不会复制进仓库：
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+python -m src.experiments.run_trace_baselines `
+  --machine-meta D:\data\machine_meta.csv `
+  --batch-task D:\data\batch_task.csv `
+  --limit-tasks 500 `
+  --limit-resources 50 `
+  --strategies C01 C03 C04 C05 C09 `
+  --output results/trace-baselines/subset1
+```
+
+该入口会生成 `result.json`、`strategies.json` 和 `tasks.csv`，并在 metadata 中记录数据来源、输入路径、样本限制和策略列表。真实 trace 的 `batch_task` 是集群批任务数据，不能直接当作供应链订单数据；论文中应将它作为调度方法的生产集群验证数据，并与仿真数据分开报告。

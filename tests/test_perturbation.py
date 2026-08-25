@@ -1,11 +1,11 @@
-import heapq
 from src.models.task import Task, TaskStatus
 from src.models.resource import Resource, ResourceStatus
-from src.environment.simulation import SimulationEnv, Event
+from src.environment.simulation import SimulationEnv
 from src.environment.perturbation import PerturbationManager
+from src.strategies.heuristics import get_scheduler_by_id
 
 def test_complex_scenario():
-    env = SimulationEnv()
+    env = SimulationEnv(scheduler=get_scheduler_by_id("C01"))
     pm = PerturbationManager(env)
     
     # 1. 设置资源
@@ -19,8 +19,7 @@ def test_complex_scenario():
     env.add_task(t2)
     
     # 3. 调度一个确定的资源故障 (在时间 2.0 发生，持续 2.0)
-    heapq.heappush(env.event_queue, Event(2.0, "RESOURCE_FAULT", "R1"))
-    heapq.heappush(env.event_queue, Event(4.0, "RESOURCE_RECOVERY", "R1"))
+    env.inject_resource_fault("R1", delay=2.0, duration=2.0)
     
     print("\n--- Starting Complex Scenario Simulation ---")
     
@@ -28,24 +27,8 @@ def test_complex_scenario():
     while env.event_queue:
         event = env.step()
         
-        # 简单的手动调度逻辑逻辑
-        ready_tasks = [t for t in env.tasks.values() if t.status == TaskStatus.READY]
-        idle_resources = [r for r in env.resources.values() if r.status == ResourceStatus.IDLE]
-        
-        if ready_tasks and idle_resources:
-            target_task = ready_tasks[0]
-            target_res = idle_resources[0]
-            
-            target_res.status = ResourceStatus.BUSY
-            target_res.current_task_id = target_task.task_id
-            target_task.status = TaskStatus.RUNNING
-            target_task.start_time = env.current_time
-            
-            completion_time = env.current_time + target_task.duration
-            heapq.heappush(env.event_queue, Event(completion_time, "TASK_COMPLETION", (target_task.task_id, target_res.resource_id)))
-            print(f"[Scheduler] Assigned {target_task.task_id} to {target_res.resource_id} at {env.current_time}")
-
-    assert env.tasks["T2"].status == TaskStatus.COMPLETED
+    assert env.tasks["T1"].status == TaskStatus.FAILED
+    assert env.resources["R1"].status == ResourceStatus.IDLE
     print("--- Complex Scenario Test Passed ---")
 
 if __name__ == "__main__":
