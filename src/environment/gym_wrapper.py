@@ -103,13 +103,18 @@ class SchedulingEnv(gym.Env):
         running_count = len([r for r in self.sim.resources.values() if r.status == ResourceStatus.BUSY])
         pending_count = len([t for t in self.sim.tasks.values() if t.status == TaskStatus.PENDING])
         failed_count = len([t for t in self.sim.tasks.values() if t.status == TaskStatus.FAILED])
+        pending_workload = sum(
+            t.remaining_time
+            for t in self.sim.tasks.values()
+            if t.status not in (TaskStatus.COMPLETED, TaskStatus.FAILED)
+        )
         system_feats = np.array([
             len(ready_tasks),
             idle_res_count,
             running_count,
             pending_count,
             failed_count,
-            self.sim.current_time,
+            pending_workload,
         ], dtype=np.float32)
 
         resource_feats = np.zeros((self.max_resource_size, 5), dtype=np.float32) - 1.0

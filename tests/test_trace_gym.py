@@ -66,3 +66,17 @@ def test_trace_environment_rewards_shorter_completed_workload_more():
         return reward
 
     assert run(1.0) - run(10.0) > 5.0
+
+
+def test_trace_observation_exposes_pending_workload_signature():
+    def state_for(duration):
+        trace = AlibabaTrace(
+            tasks=[Task("t1", priority=1, duration=duration, arrival_time=0.0)],
+            resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+            metadata={"data_source": "test"},
+        )
+        env = TraceSchedulingEnv(trace, strategy_ids=["C01"])
+        observation, _ = env.reset(seed=0)
+        return observation["system"][5]
+
+    assert state_for(10.0) > state_for(1.0)
