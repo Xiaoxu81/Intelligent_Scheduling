@@ -24,3 +24,14 @@ def test_demonstration_label_uses_objective_weights_and_stable_tie_breaking():
 
     assert label.strategy_id in {"C01", "C03"}
     assert "weighted_loss" in label.scores
+
+
+def test_fault_scenario_records_recovery_and_decision_metrics():
+    result = evaluate_candidates(
+        ScenarioConfig(seed=3, num_tasks=3, num_resources=1, fault_profile="single"),
+        strategy_ids=["C01"],
+        repeats=1,
+    )[0]
+
+    assert result.metrics["recovery_time"] > 0.0
+    assert result.metrics["decision_time"] >= 0.0

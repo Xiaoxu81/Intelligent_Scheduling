@@ -32,6 +32,18 @@ def collect_metrics(simulation) -> Dict[str, float]:
             task.deadline is None or task.end_time <= task.deadline for task in completed
         ) / len(completed)
     metrics["failure_rate"] = len(failed) / len(tasks) if tasks else 0.0
+    fault_times = {}
+    recovery_durations = []
+    for event in getattr(simulation, "event_history", []):
+        if event.event_type == "RESOURCE_FAULT":
+            fault_times[event.data] = event.time
+        elif event.event_type == "RESOURCE_RECOVERY" and event.data in fault_times:
+            recovery_durations.append(event.time - fault_times.pop(event.data))
+    metrics["recovery_time"] = sum(recovery_durations) / len(recovery_durations) if recovery_durations else 0.0
+    metrics["decision_time"] = (
+        simulation.decision_time_total / simulation.decision_count
+        if getattr(simulation, "decision_count", 0) else 0.0
+    )
     if tasks:
         waiting = [
             max(0.0, simulation.current_time - task.arrival_time)

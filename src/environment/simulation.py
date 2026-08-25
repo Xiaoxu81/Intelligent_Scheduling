@@ -1,4 +1,5 @@
 import simpy
+import time
 from typing import List, Dict, Any, Optional
 from src.models.task import Task, TaskStatus
 from src.models.resource import Resource, ResourceStatus
@@ -38,6 +39,9 @@ class SimulationEnv:
 
         # 领域事件缓冲区（供 step() 逐个消费）
         self._domain_events: List[Event] = []
+        self.event_history: List[Event] = []
+        self.decision_time_total = 0.0
+        self.decision_count = 0
 
     # ========== 属性接口 ==========
 
@@ -69,6 +73,7 @@ class SimulationEnv:
                 self.env.step()
                 if self._domain_events:
                     event = self._domain_events.pop(0)
+                    self.event_history.append(event)
                     self._run_scheduler()
                     return event
         except simpy.core.EmptySchedule:
@@ -210,7 +215,10 @@ class SimulationEnv:
             self._handle_preemption()
 
         # 获取调度决策并执行
+        started = time.perf_counter()
         decisions = self.scheduler.schedule(ready_tasks, resources, self.env.now)
+        self.decision_time_total += time.perf_counter() - started
+        self.decision_count += 1
         for task, resource in decisions:
             self._execute_task(task, resource)
 

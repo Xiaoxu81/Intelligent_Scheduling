@@ -18,16 +18,31 @@ def run(args=None):
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--output", default="results/baselines")
     parser.add_argument("--strategies", nargs="+", default=DEFAULT_STRATEGIES)
+    parser.add_argument("--fault-profile", default="none", choices=["none", "single"])
     parsed = parser.parse_args(args)
 
-    config = ScenarioConfig(seed=parsed.seed, num_tasks=parsed.tasks, num_resources=parsed.resources)
+    config = ScenarioConfig(
+        seed=parsed.seed,
+        num_tasks=parsed.tasks,
+        num_resources=parsed.resources,
+        fault_profile=parsed.fault_profile,
+    )
     results = evaluate_candidates(config, parsed.strategies, repeats=parsed.repeats)
     output_dir = Path(parsed.output)
     output_dir.mkdir(parents=True, exist_ok=True)
     summary = {result.strategy_id: result.metrics for result in results}
     paths = write_experiment_result(
         output_dir,
-        metadata={"seed": parsed.seed, "tasks": parsed.tasks, "resources": parsed.resources, "repeats": parsed.repeats},
+        metadata={
+            "data_source": "synthetic_simulation",
+            "scenario_generator": "src.experiments.scenarios.build_scenario",
+            "simulation_engine": "src.environment.simulation.SimulationEnv",
+            "seed": parsed.seed,
+            "tasks": parsed.tasks,
+            "resources": parsed.resources,
+            "repeats": parsed.repeats,
+            "fault_profile": parsed.fault_profile,
+        },
         task_rows=[],
         summary=summary,
     )

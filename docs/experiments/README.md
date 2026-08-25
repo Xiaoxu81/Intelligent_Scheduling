@@ -1,0 +1,23 @@
+# 实验数据说明
+
+当前实验数据全部来自本地可复现仿真，不包含真实企业生产数据，也不是从互联网下载的数据。
+
+## 数据生成链路
+
+1. `src/experiments/scenarios.py` 使用固定随机种子生成任务、资源、依赖、截止期和任务目标权重。
+2. `src/environment/simulation.py` 使用 SimPy 推进任务到达、调度、执行、抢占和故障事件。
+3. `src/experiments/evaluator.py` 在相同场景上运行多个候选策略并采集指标。
+4. `src/experiments/run_baselines.py` 和 `src/experiments/run_ppo.py` 保存实验配置、随机种子和训练/评价结果。
+
+每个结果文件的 `metadata.data_source` 应为 `synthetic_simulation`。在报告中，这些结果只能用于说明方法原型和仿真验证，不能表述为真实产业链数据结论。
+
+## 当前仿真数据规模
+
+已运行的基线 smoke 实验使用 3 个随机种子，每个种子重复 3 次，每个场景包含 8 个任务和 2 个资源。该规模用于验证实验流水线，正式报告还需要扩大样本量并补充故障、消融和泛化场景。
+
+## 运行示例
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+python -m src.experiments.run_baselines --seed 1 --tasks 8 --resources 2 --repeats 3 --fault-profile single --output results/baselines-fault/seed1
+```

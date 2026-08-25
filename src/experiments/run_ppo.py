@@ -61,6 +61,9 @@ def run_training(
         })
 
     result = {
+        "data_source": "synthetic_simulation",
+        "scenario_generator": "src.environment.gym_wrapper.SchedulingEnv._seed_tasks",
+        "simulation_engine": "src.environment.simulation.SimulationEnv",
         "seed": seed,
         "episodes": logs,
         "strategy_usage": {f"C{i + 1:02d}": count for i, count in enumerate(strategy_usage)},
