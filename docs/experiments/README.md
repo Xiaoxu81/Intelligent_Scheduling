@@ -96,3 +96,5 @@ trace PPO 默认只在报告候选集 `C01 C03 C04 C05 C09` 中选择；可通�
 训练器现在支持 `fault_profiles` 轮换正常、早期故障和晚期故障。混合训练结果保存在 `results/trace-mixed-fault/`；对未参与训练的相对时间 50 故障，两个窗口 PPO 分别为 56.6190 和 359.6400，第二窗口已达到最优固定策略，第一窗口距离 55.9762 约 1.15%。
 
 为避免 PPO 更新冲掉细粒度专家标签，训练器新增 `bc_epochs_per_update` 专家约束。合成动态场景对比保存在 `results/synthetic-dynamic/ppo-regularized/comparison.json`：seed=80 上 PPO 为 10.6667，最优固定策略为 11.6667，提升 8.57%；seed=9 提升 2.78%；seed=12 提升 2.17%。同时记录了 seed=27/73/43 的退化结果，说明提升并非所有场景都稳定，需要在报告中同时呈现均值和方差。
+
+从该模型继续训练 500 个 episode 后，最终结果保存在 `results/synthetic-dynamic/ppo-continued/comparison.json`：seed=27、80、73、43、9、12 的 PPO 提升分别为 9.72%、8.57%、10.53%、2.00%、2.78%、2.17%，六个测试场景全部超过最优固定策略。该结论适用于合成动态混合任务集；Alibaba 真实 trace 上目前仍以达到最优固定策略为主，不能混用两类结论。
