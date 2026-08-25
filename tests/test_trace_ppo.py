@@ -120,3 +120,24 @@ def test_trace_ppo_can_resume_from_saved_model(tmp_path):
     )
 
     assert resumed["resumed_from"] == str(first_dir / "ppo_model.pt")
+
+
+def test_trace_ppo_accepts_controlled_fault_configuration(tmp_path):
+    trace = AlibabaTrace(
+        tasks=[Task("j1:M1", priority=1, duration=4.0, arrival_time=0.0)],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "alibaba_cluster_trace_v2018"},
+    )
+
+    result = run_trace_training(
+        trace,
+        episodes=1,
+        max_steps=10,
+        k_epochs=1,
+        fault_resource="m1",
+        fault_at=1.0,
+        fault_duration=2.0,
+        output_dir=tmp_path,
+    )
+
+    assert result["fault_profile"]["resource"] == "m1"

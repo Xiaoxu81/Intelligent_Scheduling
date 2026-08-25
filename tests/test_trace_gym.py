@@ -98,3 +98,23 @@ def test_trace_environment_can_make_one_task_decision_at_a_time():
     statuses = [task.status for task in env.sim.tasks.values()]
     assert statuses.count(TaskStatus.RUNNING) == 1
     assert statuses.count(TaskStatus.READY) == 1
+
+
+def test_trace_environment_can_inject_controlled_fault():
+    trace = AlibabaTrace(
+        tasks=[Task("t1", priority=1, duration=10.0, arrival_time=0.0)],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "test"},
+    )
+    env = TraceSchedulingEnv(
+        trace,
+        strategy_ids=["C01"],
+        max_assignments_per_step=1,
+        fault_resource="m1",
+        fault_at=0.5,
+        fault_duration=2.0,
+    )
+    env.reset(seed=0)
+    env.step(0)
+
+    assert env.sim.resources["m1"].status.value == "FAULT"

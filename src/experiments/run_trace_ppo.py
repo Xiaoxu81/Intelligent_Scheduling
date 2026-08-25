@@ -26,6 +26,9 @@ def run_trace_training(
     bc_epochs: int = 0,
     resume_from: Optional[Union[str, Path]] = None,
     max_assignments_per_step: Optional[int] = 1,
+    fault_resource: Optional[str] = None,
+    fault_at: Optional[float] = None,
+    fault_duration: float = 0.0,
 ) -> Dict[str, Any]:
     if episodes < 1 or max_steps < 1:
         raise ValueError("episodes and max_steps must be positive")
@@ -41,6 +44,9 @@ def run_trace_training(
         max_resource_size=4,
         strategy_ids=strategy_ids,
         max_assignments_per_step=max_assignments_per_step,
+        fault_resource=fault_resource,
+        fault_at=fault_at,
+        fault_duration=fault_duration,
     )
     agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=k_epochs)
     if resume_from is not None:
@@ -107,6 +113,11 @@ def run_trace_training(
         "strategy_ids": strategy_ids,
         "behavior_cloning": {"enabled": bool(bc_epochs), "epochs": bc_epochs, "samples": len(expert_data or [])},
         "resumed_from": str(resume_from) if resume_from is not None else None,
+        "fault_profile": {
+            "resource": fault_resource,
+            "at": fault_at,
+            "duration": fault_duration if fault_resource is not None else None,
+        },
         "strategy_usage": {strategy_id: count for strategy_id, count in zip(strategy_ids, strategy_usage)},
     }
     if output_dir is not None:
@@ -126,6 +137,9 @@ def evaluate_trace_policy(
     seed: int = 0,
     strategy_ids=None,
     max_assignments_per_step: Optional[int] = 1,
+    fault_resource: Optional[str] = None,
+    fault_at: Optional[float] = None,
+    fault_duration: float = 0.0,
 ) -> Dict[str, Any]:
     strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
     env = TraceSchedulingEnv(
@@ -134,6 +148,9 @@ def evaluate_trace_policy(
         max_resource_size=4,
         strategy_ids=strategy_ids,
         max_assignments_per_step=max_assignments_per_step,
+        fault_resource=fault_resource,
+        fault_at=fault_at,
+        fault_duration=fault_duration,
     )
     agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=1)
     state = torch.load(model_path, map_location="cpu", weights_only=True)
@@ -179,6 +196,9 @@ def main(args=None) -> None:
     parser.add_argument("--output", default="results/trace-ppo")
     parser.add_argument("--resume-from")
     parser.add_argument("--max-assignments-per-step", type=int, default=1)
+    parser.add_argument("--fault-resource")
+    parser.add_argument("--fault-at", type=float)
+    parser.add_argument("--fault-duration", type=float, default=0.0)
     parsed = parser.parse_args(args)
     trace = load_v2018_rows(
         parsed.machine_meta,
@@ -198,6 +218,9 @@ def main(args=None) -> None:
         strategy_ids=parsed.strategies,
         resume_from=parsed.resume_from,
         max_assignments_per_step=parsed.max_assignments_per_step,
+        fault_resource=parsed.fault_resource,
+        fault_at=parsed.fault_at,
+        fault_duration=parsed.fault_duration,
     )
     print(json.dumps({"episodes": len(result["episodes"]), "output": parsed.output}, indent=2))
 
