@@ -25,12 +25,26 @@ def _bounded_trace(trace: AlibabaTrace, limit_tasks: Optional[int], limit_resour
     return AlibabaTrace(tasks=tasks, resources=resources, metadata=metadata)
 
 
-def _run_one(trace: AlibabaTrace, strategy_id: str):
+def _run_one(
+    trace: AlibabaTrace,
+    strategy_id: str,
+    fault_resource: Optional[str] = None,
+    fault_at: Optional[float] = None,
+    fault_duration: float = 0.0,
+):
     env = SimulationEnv(scheduler=get_scheduler_by_id(strategy_id))
     for resource in copy.deepcopy(trace.resources):
         env.add_resource(resource)
     for task in copy.deepcopy(trace.tasks):
         env.add_task(task)
+    if fault_resource and fault_at is not None:
+        if fault_resource not in env.resources:
+            raise ValueError(f"fault_resource {fault_resource!r} is not in selected resources")
+        env.inject_resource_fault(
+            fault_resource,
+            delay=max(0.0, fault_at),
+            duration=max(0.0, fault_duration),
+        )
     while env.event_queue:
         env.step()
     metrics = collect_metrics(env)
@@ -61,6 +75,9 @@ def run_trace_baselines(
     end_time: Optional[float] = None,
     limit_jobs: Optional[int] = None,
     complete_jobs: bool = True,
+    fault_resource: Optional[str] = None,
+    fault_at: Optional[float] = None,
+    fault_duration: float = 0.0,
 ):
     strategies = list(strategies)
     trace = _bounded_trace(
@@ -80,7 +97,13 @@ def run_trace_baselines(
     summary = {}
     task_rows = []
     for strategy_id in strategies:
-        metrics, rows = _run_one(trace, strategy_id)
+        metrics, rows = _run_one(
+            trace,
+            strategy_id,
+            fault_resource=fault_resource,
+            fault_at=fault_at,
+            fault_duration=fault_duration,
+        )
         summary[strategy_id] = metrics
         task_rows.extend(rows)
 
@@ -94,6 +117,12 @@ def run_trace_baselines(
         "experiment": "trace_baseline",
         "simulation_engine": "src.environment.simulation.SimulationEnv",
         "raw_data_committed": False,
+        "fault_profile": (
+            "trace_workload_controlled_fault" if fault_resource and fault_at is not None else "none"
+        ),
+        "fault_resource": fault_resource,
+        "fault_at": fault_at,
+        "fault_duration": fault_duration if fault_resource and fault_at is not None else None,
     }
     paths = write_experiment_result(output_dir, metadata, task_rows, summary)
     (output_dir / "strategies.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -112,6 +141,9 @@ def run(args=None):
     parser.add_argument("--end-time", type=float)
     parser.add_argument("--limit-jobs", type=int)
     parser.add_argument("--partial-jobs", action="store_true")
+    parser.add_argument("--fault-resource")
+    parser.add_argument("--fault-at", type=float)
+    parser.add_argument("--fault-duration", type=float, default=0.0)
     parsed = parser.parse_args(args)
     paths = run_trace_baselines(
         machine_meta=parsed.machine_meta,
@@ -124,6 +156,9 @@ def run(args=None):
         end_time=parsed.end_time,
         limit_jobs=parsed.limit_jobs,
         complete_jobs=not parsed.partial_jobs,
+        fault_resource=parsed.fault_resource,
+        fault_at=parsed.fault_at,
+        fault_duration=parsed.fault_duration,
     )
     print(json.dumps({key: str(value) for key, value in paths.items()}, indent=2))
     return paths
