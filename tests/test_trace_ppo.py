@@ -16,3 +16,18 @@ def test_trace_ppo_runner_records_real_trace_provenance(tmp_path):
     assert result["data_source"] == "alibaba_cluster_trace_v2018"
     assert len(result["episodes"]) == 2
     assert (tmp_path / "training_log.json").exists()
+
+
+def test_trace_ppo_marks_step_limit_as_truncated():
+    trace = AlibabaTrace(
+        tasks=[
+            Task("j1:M1", priority=1, duration=10.0, arrival_time=0.0),
+            Task("j1:M2", priority=1, duration=10.0, arrival_time=0.0),
+        ],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "alibaba_cluster_trace_v2018"},
+    )
+
+    result = run_trace_training(trace, episodes=1, max_steps=1, k_epochs=1)
+
+    assert result["episodes"][0]["truncated"] is True

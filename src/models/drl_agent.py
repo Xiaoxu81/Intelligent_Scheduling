@@ -120,7 +120,7 @@ class PPOAgent:
             
         rewards = torch.FloatTensor(rewards)
         # 归一化奖励
-        rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-7)
+        rewards = (rewards - rewards.mean()) / (rewards.std(unbiased=False) + 1e-7)
 
         # 迭代更新 K 次
         for _ in range(self.K_epochs):
@@ -140,13 +140,14 @@ class PPOAgent:
             ratios = torch.exp(logprobs - old_logprobs.detach())
 
             # 计算优势 (Advantages)
-            advantages = rewards - state_values.detach().squeeze()
+            state_values_flat = state_values.squeeze(-1)
+            advantages = rewards - state_values_flat.detach()
 
             # PPO 损失函数
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
             
-            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values.squeeze(), rewards) - 0.01 * dist_entropy
+            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(state_values_flat, rewards) - 0.01 * dist_entropy
             
             # 梯度下降
             self.optimizer.zero_grad()

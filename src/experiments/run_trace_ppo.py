@@ -49,6 +49,8 @@ def run_trace_training(
             obs = next_obs
             if terminated or truncated:
                 break
+        if not terminated and not truncated and len(memory) >= max_steps:
+            truncated = True
         if memory:
             agent.update(memory)
         logs.append({

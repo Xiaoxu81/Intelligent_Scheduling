@@ -177,6 +177,10 @@ class SchedulingEnv(gym.Env):
             for t in self.sim.tasks.values():
                 if t.status != TaskStatus.COMPLETED and t.deadline and self.sim.current_time > t.deadline:
                     reward -= 10.0
+            if all(t.status in (TaskStatus.COMPLETED, TaskStatus.FAILED) for t in self.sim.tasks.values()):
+                terminated = True
+                if all(t.status == TaskStatus.COMPLETED for t in self.sim.tasks.values()):
+                    reward += 20.0
         else:
             # 所有任务完成
             if all(t.status == TaskStatus.COMPLETED for t in self.sim.tasks.values()):

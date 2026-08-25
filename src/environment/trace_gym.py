@@ -18,7 +18,10 @@ class TraceSchedulingEnv(SchedulingEnv):
     def _seed_tasks(self):
         for resource in copy.deepcopy(self.trace.resources):
             self.sim.add_resource(resource)
-        for task in copy.deepcopy(self.trace.tasks):
+        tasks = copy.deepcopy(self.trace.tasks)
+        origin = min((task.arrival_time for task in tasks), default=0.0)
+        for task in tasks:
+            task.arrival_time -= origin
             self.sim.add_task(task)
         if self.sim.event_queue:
             self.sim.step()
