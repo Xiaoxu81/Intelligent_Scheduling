@@ -22,4 +22,12 @@ $env:PYTHONPATH = (Get-Location).Path
 python -m src.experiments.run_ppo --seed 7 --episodes 5 --max-steps 30 --k-epochs 1 --output results/ppo
 ```
 
+To aggregate several baseline result files:
+
+```powershell
+python -m src.experiments.aggregate results/baselines-multiseed/seed1/strategies.json results/baselines-multiseed/seed2/strategies.json --output results/baselines-multiseed/aggregate.json
+```
+
+The plotting helpers create comparison and PPO reward PNGs from the saved JSON files.
+
 The research design and implementation plan are in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
