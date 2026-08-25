@@ -20,3 +20,22 @@ def test_alibaba_v2018_rows_map_tasks_resources_and_dag_dependencies(tmp_path):
     assert trace.tasks[0].capability_requirements["cpu"] == 2.0
     assert trace.resources[0].capabilities["cpu"] == 8.0
     assert trace.metadata["data_source"] == "alibaba_cluster_trace_v2018"
+
+
+def test_alibaba_v2018_loader_can_bound_raw_rows(tmp_path):
+    machine_path = tmp_path / "machine_meta.csv"
+    task_path = tmp_path / "batch_task.csv"
+    machine_path.write_text(
+        "M1,0,1,fd-a,8,64,ONLINE\nM2,0,1,fd-b,8,64,ONLINE\n",
+        encoding="utf-8",
+    )
+    task_path.write_text(
+        "task1,1,jobA,M,Terminated,0,1,100,10\n"
+        "task2,1,jobA,M,Terminated,1,2,100,10\n",
+        encoding="utf-8",
+    )
+
+    trace = load_v2018_rows(machine_path, task_path, limit_tasks=1, limit_resources=1)
+
+    assert len(trace.tasks) == 1
+    assert len(trace.resources) == 1

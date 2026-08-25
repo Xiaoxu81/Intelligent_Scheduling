@@ -60,9 +60,14 @@ def run_trace_baselines(
 ):
     strategies = list(strategies)
     trace = _bounded_trace(
-        load_v2018_rows(machine_meta, batch_task),
-        limit_tasks=limit_tasks,
-        limit_resources=limit_resources,
+        load_v2018_rows(
+            machine_meta,
+            batch_task,
+            limit_tasks=limit_tasks,
+            limit_resources=limit_resources,
+        ),
+        limit_tasks=None,
+        limit_resources=None,
     )
     summary = {}
     task_rows = []

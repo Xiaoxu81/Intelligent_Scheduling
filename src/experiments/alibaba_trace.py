@@ -25,9 +25,15 @@ class AlibabaTrace:
     metadata: Dict[str, str]
 
 
-def _read_rows(path: Union[str, Path], columns: List[str], delimiter: str = ",") -> Iterable[Dict[str, str]]:
+def _read_rows(
+    path: Union[str, Path],
+    columns: List[str],
+    delimiter: str = ",",
+    limit: int = None,
+) -> Iterable[Dict[str, str]]:
     with Path(path).open("r", encoding="utf-8", newline="") as stream:
         reader = csv.reader(stream, delimiter=delimiter)
+        yielded = 0
         for values in reader:
             if not values or all(not value.strip() for value in values):
                 continue
@@ -36,6 +42,9 @@ def _read_rows(path: Union[str, Path], columns: List[str], delimiter: str = ",")
             if len(values) < len(columns):
                 raise ValueError(f"{path} row has {len(values)} columns; expected {len(columns)}")
             yield dict(zip(columns, [value.strip() for value in values]))
+            yielded += 1
+            if limit is not None and yielded >= limit:
+                break
 
 
 def _float(value: str, default: float = 0.0) -> float:
@@ -58,9 +67,11 @@ def load_v2018_rows(
     machine_meta_path: Union[str, Path],
     batch_task_path: Union[str, Path],
     delimiter: str = ",",
+    limit_tasks: int = None,
+    limit_resources: int = None,
 ) -> AlibabaTrace:
-    machine_rows = list(_read_rows(machine_meta_path, MACHINE_META_COLUMNS, delimiter))
-    task_rows = list(_read_rows(batch_task_path, BATCH_TASK_COLUMNS, delimiter))
+    machine_rows = list(_read_rows(machine_meta_path, MACHINE_META_COLUMNS, delimiter, limit_resources))
+    task_rows = list(_read_rows(batch_task_path, BATCH_TASK_COLUMNS, delimiter, limit_tasks))
 
     resources = [
         Resource(
