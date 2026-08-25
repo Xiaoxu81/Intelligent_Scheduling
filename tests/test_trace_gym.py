@@ -36,3 +36,17 @@ def test_trace_gym_rebases_absolute_trace_time_for_learning():
 
     assert env.sim.current_time == 0.0
     assert next(iter(env.sim.tasks.values())).arrival_time == 0.0
+
+
+def test_trace_environment_maps_restricted_strategy_actions():
+    trace = AlibabaTrace(
+        tasks=[Task("t1", priority=1, duration=1.0, arrival_time=0.0)],
+        resources=[Resource("m1", "Machine", capabilities={"machine": 2.0})],
+        metadata={"data_source": "alibaba_cluster_trace_v2018"},
+    )
+    env = TraceSchedulingEnv(trace, strategy_ids=["C04", "C09"])
+
+    assert env.action_space.n == 2
+    env.reset(seed=0)
+    env.step(0)
+    assert env.sim.scheduler is not None

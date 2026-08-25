@@ -17,6 +17,7 @@ class SchedulingEnv(gym.Env):
         super(SchedulingEnv, self).__init__()
         self.max_queue_size = max_queue_size
         self.num_strategies = num_strategies
+        self.strategy_ids = [f"C{i + 1:02d}" for i in range(num_strategies)]
         self.max_resource_size = max_resource_size
         self.sim = SimulationEnv()
         
@@ -140,7 +141,7 @@ class SchedulingEnv(gym.Env):
         truncated = False
         
         # 1. 根据动作选择对应的调度策略
-        strategy_id = f"C{action + 1:02d}"
+        strategy_id = self.strategy_ids[int(action)]
         scheduler = get_scheduler_by_id(strategy_id)
         self.sim.scheduler = scheduler
         

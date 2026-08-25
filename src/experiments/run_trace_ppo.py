@@ -11,6 +11,9 @@ from src.experiments.metrics import collect_metrics
 from src.models.drl_agent import PPOAgent
 
 
+DEFAULT_STRATEGY_IDS = ["C01", "C03", "C04", "C05", "C09"]
+
+
 def run_trace_training(
     trace: AlibabaTrace,
     seed: int = 0,
@@ -18,17 +21,34 @@ def run_trace_training(
     max_steps: int = 200,
     output_dir: Optional[Union[str, Path]] = None,
     k_epochs: int = 10,
+    strategy_ids=None,
+    expert_data=None,
+    bc_epochs: int = 0,
 ) -> Dict[str, Any]:
     if episodes < 1 or max_steps < 1:
         raise ValueError("episodes and max_steps must be positive")
 
     torch.manual_seed(seed)
-    env = TraceSchedulingEnv(trace, max_queue_size=10, max_resource_size=4)
-    agent = PPOAgent(max_queue_size=10, K_epochs=k_epochs)
+    traces = list(trace) if isinstance(trace, (list, tuple)) else [trace]
+    if not traces or any(not isinstance(item, AlibabaTrace) for item in traces):
+        raise ValueError("trace must be an AlibabaTrace or a non-empty sequence of AlibabaTrace objects")
+    strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
+    env = TraceSchedulingEnv(traces[0], max_queue_size=10, max_resource_size=4, strategy_ids=strategy_ids)
+    agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=k_epochs)
+    if bc_epochs < 0:
+        raise ValueError("bc_epochs must be non-negative")
+    if bc_epochs and not expert_data:
+        raise ValueError("expert_data is required when bc_epochs is positive")
+    if bc_epochs:
+        invalid_actions = [action for _, action, *_ in expert_data if not 0 <= int(action) < len(strategy_ids)]
+        if invalid_actions:
+            raise ValueError("expert_data actions must use the local strategy index")
+        agent.pretrain_bc([(row[0], row[1]) for row in expert_data], epochs=bc_epochs)
     logs = []
     strategy_usage = [0] * agent.num_strategies
 
     for episode in range(episodes):
+        env.trace = traces[episode % len(traces)]
         obs, _ = env.reset(seed=seed + episode)
         memory = []
         reward_total = 0.0
@@ -63,12 +83,15 @@ def run_trace_training(
         })
 
     result = {
-        "data_source": trace.metadata.get("data_source", "trace"),
-        "trace_metadata": trace.metadata,
+        "data_source": traces[0].metadata.get("data_source", "trace"),
+        "trace_metadata": [item.metadata for item in traces],
+        "trace_windows": [item.metadata.get("window", item.metadata.get("time_window", index)) for index, item in enumerate(traces)],
         "simulation_engine": "src.environment.simulation.SimulationEnv",
         "seed": seed,
         "episodes": logs,
-        "strategy_usage": {f"C{i + 1:02d}": count for i, count in enumerate(strategy_usage)},
+        "strategy_ids": strategy_ids,
+        "behavior_cloning": {"enabled": bool(bc_epochs), "epochs": bc_epochs, "samples": len(expert_data or [])},
+        "strategy_usage": {strategy_id: count for strategy_id, count in zip(strategy_ids, strategy_usage)},
     }
     if output_dir is not None:
         output_path = Path(output_dir)
@@ -85,10 +108,12 @@ def evaluate_trace_policy(
     model_path: Union[str, Path],
     max_steps: int = 200,
     seed: int = 0,
+    strategy_ids=None,
 ) -> Dict[str, Any]:
-    env = TraceSchedulingEnv(trace, max_queue_size=10, max_resource_size=4)
-    agent = PPOAgent(max_queue_size=10, K_epochs=1)
-    state = torch.load(model_path, map_location="cpu")
+    strategy_ids = list(strategy_ids or DEFAULT_STRATEGY_IDS)
+    env = TraceSchedulingEnv(trace, max_queue_size=10, max_resource_size=4, strategy_ids=strategy_ids)
+    agent = PPOAgent(max_queue_size=10, num_strategies=len(strategy_ids), K_epochs=1)
+    state = torch.load(model_path, map_location="cpu", weights_only=True)
     agent.model.load_state_dict(state)
     agent.model_old.load_state_dict(state)
 
@@ -110,7 +135,8 @@ def evaluate_trace_policy(
         "steps": sum(usage),
         "terminated": terminated,
         "truncated": truncated,
-        "strategy_usage": {f"C{i + 1:02d}": count for i, count in enumerate(usage)},
+        "strategy_ids": strategy_ids,
+        "strategy_usage": {strategy_id: count for strategy_id, count in zip(strategy_ids, usage)},
     }
 
 
@@ -125,6 +151,7 @@ def main(args=None) -> None:
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--max-steps", type=int, default=100)
     parser.add_argument("--k-epochs", type=int, default=2)
+    parser.add_argument("--strategies", nargs="+", default=DEFAULT_STRATEGY_IDS)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--output", default="results/trace-ppo")
     parsed = parser.parse_args(args)
@@ -143,6 +170,7 @@ def main(args=None) -> None:
         max_steps=parsed.max_steps,
         output_dir=parsed.output,
         k_epochs=parsed.k_epochs,
+        strategy_ids=parsed.strategies,
     )
     print(json.dumps({"episodes": len(result["episodes"]), "output": parsed.output}, indent=2))
 

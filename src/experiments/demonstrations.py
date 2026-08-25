@@ -40,10 +40,16 @@ def scenario_to_observation(scenario, max_queue_size: int = 10, max_resource_siz
 
 
 def generate_demonstrations(
-    configs: Iterable[ScenarioConfig], strategy_ids: Iterable[str], repeats: int = 1
+    configs: Iterable[ScenarioConfig],
+    strategy_ids: Iterable[str],
+    repeats: int = 1,
+    action_strategy_ids: Iterable[str] = None,
 ) -> List[Tuple[Dict[str, np.ndarray], int, Dict[str, object]]]:
     rows = []
     strategy_ids = list(strategy_ids)
+    action_strategy_ids = list(action_strategy_ids) if action_strategy_ids is not None else None
+    if action_strategy_ids is not None and any(strategy_id not in action_strategy_ids for strategy_id in strategy_ids):
+        raise ValueError("action_strategy_ids must contain every demonstrated strategy")
     for config in configs:
         results = evaluate_candidates(config, strategy_ids, repeats=repeats)
         scenario = build_scenario(config)
@@ -51,7 +57,11 @@ def generate_demonstrations(
         rows.append(
             (
                 scenario_to_observation(scenario),
-                int(label.strategy_id[1:]) - 1,
+                (
+                    action_strategy_ids.index(label.strategy_id)
+                    if action_strategy_ids is not None
+                    else int(label.strategy_id[1:]) - 1
+                ),
                 {
                     "seed": config.seed,
                     "strategy_id": label.strategy_id,

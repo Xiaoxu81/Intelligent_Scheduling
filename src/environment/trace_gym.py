@@ -1,4 +1,5 @@
 import copy
+from typing import Iterable, Optional
 
 from src.environment.gym_wrapper import SchedulingEnv
 from src.experiments.alibaba_trace import AlibabaTrace
@@ -7,13 +8,25 @@ from src.experiments.alibaba_trace import AlibabaTrace
 class TraceSchedulingEnv(SchedulingEnv):
     """Gym environment that replays a selected Alibaba trace workload."""
 
-    def __init__(self, trace: AlibabaTrace, max_queue_size: int = 10, max_resource_size: int = 4):
+    def __init__(
+        self,
+        trace: AlibabaTrace,
+        max_queue_size: int = 10,
+        max_resource_size: int = 4,
+        strategy_ids: Optional[Iterable[str]] = None,
+    ):
         self.trace = trace
+        requested_strategy_ids = list(strategy_ids or [f"C{i:02d}" for i in range(1, 13)])
+        if not requested_strategy_ids or any(
+            strategy_id not in {f"C{i:02d}" for i in range(1, 13)} for strategy_id in requested_strategy_ids
+        ):
+            raise ValueError("strategy_ids must contain valid C01-C12 identifiers")
         super().__init__(
             max_queue_size=max_queue_size,
             max_resource_size=max_resource_size,
-            num_strategies=12,
+            num_strategies=len(requested_strategy_ids),
         )
+        self.strategy_ids = requested_strategy_ids
 
     def _seed_tasks(self):
         for resource in copy.deepcopy(self.trace.resources):

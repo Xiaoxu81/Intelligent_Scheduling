@@ -15,3 +15,14 @@ def test_demonstrations_contain_report_state_and_strategy_label():
     assert action in {0, 2}
     assert metadata["strategy_id"] in {"C01", "C03"}
     assert metadata["seed"] == 5
+
+
+def test_demonstrations_can_emit_local_candidate_action_indices():
+    rows = generate_demonstrations(
+        [ScenarioConfig(seed=5, num_tasks=3, num_resources=2)],
+        strategy_ids=["C01", "C03"],
+        action_strategy_ids=["C03", "C01"],
+        repeats=1,
+    )
+
+    assert rows[0][1] in {0, 1}

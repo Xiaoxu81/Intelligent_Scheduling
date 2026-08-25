@@ -65,4 +65,8 @@ python -m src.experiments.run_trace_ppo `
 
 该命令用于验证真实 `S/T/R/wT` 状态能够进入 PPO 训练流程。正式实验需要增加 episode、设置独立验证窗口，并与固定策略在相同 trace 窗口上比较。
 
+trace PPO 默认只在报告候选集 `C01 C03 C04 C05 C09` 中选择；可通过 `--strategies` 修改候选集。训练接口还支持先用 `expert_data` 和 `bc_epochs` 做行为克隆预训练，再进行 PPO 更新。
+
 正式小规模评估使用 250000–260000 时间窗口、20 个完整作业和 2 台机器；PPO 训练 5 个 episode、每回合最多 300 步，完整回合为 194 步。该次模型评估结果保存在本地 `results/trace-formal/ppo-long/evaluation.json`，当前平均完成时间为 70.63，仍略慢于该窗口最优固定策略 C04/C09 的 68.86，因此只能作为当前阶段基线，不能写成 PPO 已经提升。
+
+候选集修正后的 40 episode 结果保存在 `results/trace-formal/ppo-candidates/`；同一窗口上 PPO 平均完成时间为 68.86，与 C04/C09 持平，说明动作空间缩减有效消除了原先的 2.57% 劣化，但还需要独立窗口验证自适应策略是否能进一步超过固定策略。
