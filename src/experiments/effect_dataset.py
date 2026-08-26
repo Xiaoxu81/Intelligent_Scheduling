@@ -68,6 +68,10 @@ def generate_counterfactual_records(
         env = env_factory()
         observation, _ = env.reset(seed=seed)
         initial_fingerprint = _fingerprint(observation)
+        initial_state = {
+            key: np.asarray(value, dtype=np.float32).tolist()
+            for key, value in observation.items()
+        }
         feasible = _is_feasible(env)
         total_reward = 0.0
         steps = 0
@@ -98,7 +102,7 @@ def generate_counterfactual_records(
             "truncated": truncated,
             "initial_state_fingerprint": initial_fingerprint,
         }
-        records.append(OutcomeRecord(strategy_id, feasible, metrics, _next_state(env), metadata))
+        records.append(OutcomeRecord(strategy_id, feasible, metrics, _next_state(env), metadata, initial_state))
     return records
 
 
@@ -115,6 +119,7 @@ def save_effect_dataset(records: Iterable[OutcomeRecord], output_path: str | Pat
                 "metrics": record.metrics,
                 "next_state": record.next_state,
                 "metadata": record.metadata,
+                "initial_state": record.initial_state,
             }
             for record in records
         ],

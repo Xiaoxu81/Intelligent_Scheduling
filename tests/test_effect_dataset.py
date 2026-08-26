@@ -23,5 +23,6 @@ def test_counterfactual_records_share_initial_state_and_respect_horizon():
     assert len(records) == 2
     assert {record.strategy_id for record in records} == {"C01", "C04"}
     assert len({record.metadata["initial_state_fingerprint"] for record in records}) == 1
+    assert records[0].initial_state["system"] == records[1].initial_state["system"]
     assert all(record.metadata["steps"] <= 2 for record in records)
     assert all("completion_time" in record.metrics for record in records)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Mapping, Tuple
 
 
@@ -26,6 +26,7 @@ class OutcomeRecord:
     metrics: Dict[str, float]
     next_state: Dict[str, float]
     metadata: Dict[str, object]
+    initial_state: Dict[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         missing = [key for key in EFFECT_KEYS if key not in self.metrics]
