@@ -11,7 +11,7 @@ def test_demonstrations_contain_report_state_and_strategy_label():
 
     assert len(rows) == 1
     state, action, metadata = rows[0]
-    assert set(state) == {"system", "tasks", "resources", "weights"}
+    assert set(state) == {"system", "tasks", "demands", "resources", "weights"}
     assert action in {0, 2}
     assert metadata["strategy_id"] in {"C01", "C03"}
     assert metadata["seed"] == 5

@@ -20,7 +20,7 @@ def test_trace_demonstrations_use_local_candidate_actions():
 
     assert rows
     state, action, metadata = rows[0]
-    assert set(state) == {"system", "tasks", "resources", "weights", "global"}
+    assert set(state) == {"system", "tasks", "demands", "resources", "weights", "global"}
     assert action in {0, 1}
     assert metadata["window"] == "small"
     assert metadata["expert_strategy"] in {"C01", "C04"}

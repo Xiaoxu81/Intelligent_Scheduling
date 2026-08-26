@@ -4,6 +4,7 @@ import numpy as np
 from typing import List, Dict, Any, Tuple, Optional
 
 from src.models.task import Task, TaskStatus
+from src.models.task_demand import DEMAND_KEYS
 from src.models.resource import Resource, ResourceStatus
 from src.environment.simulation import SimulationEnv
 from src.strategies.heuristics import get_scheduler_by_id
@@ -34,6 +35,7 @@ class SchedulingEnv(gym.Env):
         self.observation_space = spaces.Dict({
             "system": spaces.Box(low=-1, high=1000, shape=(6,), dtype=np.float32),
             "tasks": spaces.Box(low=-1, high=1000, shape=(max_queue_size, 9), dtype=np.float32),
+            "demands": spaces.Box(low=-1, high=1, shape=(max_queue_size, len(DEMAND_KEYS)), dtype=np.float32),
             "resources": spaces.Box(low=-1, high=1000, shape=(max_resource_size, 5), dtype=np.float32),
             "weights": spaces.Box(low=0, high=1, shape=(4,), dtype=np.float32),
             "global": spaces.Box(low=0, high=1000, shape=(2,), dtype=np.float32),
@@ -87,15 +89,38 @@ class SchedulingEnv(gym.Env):
         ready_tasks.sort(key=lambda x: x.arrival_time)
         
         task_feats = np.zeros((self.max_queue_size, 9), dtype=np.float32) - 1.0
+        demand_feats = np.zeros((self.max_queue_size, len(DEMAND_KEYS)), dtype=np.float32) - 1.0
         first_weights = np.full(4, 0.25, dtype=np.float32)
+        downstream_counts = {task.task_id: 0 for task in self.sim.tasks.values()}
+        for task in self.sim.tasks.values():
+            for dependency in task.dependencies:
+                if dependency in downstream_counts:
+                    downstream_counts[dependency] += 1
+        total_resources = len(self.sim.resources)
         for i, t in enumerate(ready_tasks[:self.max_queue_size]):
             wait_time = self.sim.current_time - (t.wait_start_time if t.wait_start_time else 0)
             first_weights = np.array([
-                t.objective_weights["time"],
-                t.objective_weights["throughput"],
-                t.objective_weights["cost"],
-                t.objective_weights["stability"],
+                t.demand_features(
+                    current_time=self.sim.current_time,
+                    downstream_count=downstream_counts.get(t.task_id, 0),
+                    feasible_resource_count=sum(
+                        1 for resource in self.sim.resources.values()
+                        if all(resource.capabilities.get(key, 0.0) >= value for key, value in t.capability_requirements.items())
+                    ),
+                    total_resource_count=total_resources,
+                )["weights"][key]
+                for key in ("time", "throughput", "cost", "stability")
             ], dtype=np.float32)
+            demand = t.demand_features(
+                current_time=self.sim.current_time,
+                downstream_count=downstream_counts.get(t.task_id, 0),
+                feasible_resource_count=sum(
+                    1 for resource in self.sim.resources.values()
+                    if all(resource.capabilities.get(key, 0.0) >= value for key, value in t.capability_requirements.items())
+                ),
+                total_resource_count=total_resources,
+            )
+            demand_feats[i] = [demand[key] for key in DEMAND_KEYS]
             task_feats[i] = [
                 t.priority,
                 t.duration,
@@ -140,6 +165,7 @@ class SchedulingEnv(gym.Env):
         return {
             "system": system_feats,
             "tasks": task_feats,
+            "demands": demand_feats,
             "resources": resource_feats,
             "weights": first_weights,
             "global": global_feats,

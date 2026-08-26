@@ -4,10 +4,12 @@ import numpy as np
 
 from src.experiments.evaluator import evaluate_candidates, select_demonstration_label
 from src.experiments.scenarios import ScenarioConfig, build_scenario
+from src.models.task_demand import DEMAND_KEYS
 
 
 def scenario_to_observation(scenario, max_queue_size: int = 10, max_resource_size: int = 4) -> Dict[str, np.ndarray]:
     task_rows = np.zeros((max_queue_size, 9), dtype=np.float32) - 1.0
+    demand_rows = np.zeros((max_queue_size, len(DEMAND_KEYS)), dtype=np.float32) - 1.0
     for i, task in enumerate(scenario.tasks[:max_queue_size]):
         task_rows[i] = [
             task.priority,
@@ -20,6 +22,15 @@ def scenario_to_observation(scenario, max_queue_size: int = 10, max_resource_siz
             task.capability_requirements.get("machine", 0.0),
             float(len(task.dependencies)),
         ]
+        demand = task.demand_features(
+            current_time=0.0,
+            feasible_resource_count=sum(
+                1 for resource in scenario.resources
+                if all(resource.capabilities.get(key, 0.0) >= value for key, value in task.capability_requirements.items())
+            ),
+            total_resource_count=len(scenario.resources),
+        )
+        demand_rows[i] = [demand[key] for key in DEMAND_KEYS]
     resource_rows = np.zeros((max_resource_size, 5), dtype=np.float32) - 1.0
     for i, resource in enumerate(scenario.resources[:max_resource_size]):
         resource_rows[i] = [
@@ -36,7 +47,7 @@ def scenario_to_observation(scenario, max_queue_size: int = 10, max_resource_siz
         dtype=np.float32,
     )
     system = np.array([len(scenario.tasks), len(scenario.resources), 0, 0, 0, 0], dtype=np.float32)
-    return {"system": system, "tasks": task_rows, "resources": resource_rows, "weights": weights}
+    return {"system": system, "tasks": task_rows, "demands": demand_rows, "resources": resource_rows, "weights": weights}
 
 
 def generate_demonstrations(

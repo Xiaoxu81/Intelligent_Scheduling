@@ -72,9 +72,6 @@ def build_scenario(config: ScenarioConfig) -> Scenario:
         priority = rng.randint(1, 5)
         deadline = arrival_time + duration + float(rng.randint(2, 8))
         dependencies = [f"T{i}" ] if i > 0 and rng.random() < 0.25 else []
-        weight_values = [rng.random() for _ in range(4)]
-        weight_total = sum(weight_values) or 1.0
-        weights = dict(zip(("time", "throughput", "cost", "stability"), [round(v / weight_total, 6) for v in weight_values]))
         tasks.append(
             Task(
                 task_id=f"T{i + 1}",
@@ -84,9 +81,29 @@ def build_scenario(config: ScenarioConfig) -> Scenario:
                 deadline=deadline,
                 dependencies=dependencies,
                 capability_requirements={"machine": float(rng.randint(1, 3))},
-                objective_weights=weights,
+                failure_penalty=priority / 5.0,
+                cost_sensitivity=1.0 - min(duration / 8.0, 1.0),
+                stability_requirement=priority / 5.0,
             )
         )
+
+    downstream_counts = {task.task_id: 0 for task in tasks}
+    for task in tasks:
+        for dependency in task.dependencies:
+            if dependency in downstream_counts:
+                downstream_counts[dependency] += 1
+    for task in tasks:
+        feasible_count = sum(
+            1 for resource in resources
+            if all(resource.capabilities.get(key, 0.0) >= value for key, value in task.capability_requirements.items())
+        )
+        demand = task.demand_features(
+            current_time=0.0,
+            downstream_count=downstream_counts[task.task_id],
+            feasible_resource_count=feasible_count,
+            total_resource_count=len(resources),
+        )
+        task.objective_weights = demand["weights"]
 
     events: List[Dict[str, Any]] = []
     if config.fault_profile != "none" and resources:
